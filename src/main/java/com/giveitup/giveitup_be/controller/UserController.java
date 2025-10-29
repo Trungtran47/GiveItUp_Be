@@ -1,6 +1,8 @@
 package com.giveitup.giveitup_be.controller;
 
+import com.giveitup.giveitup_be.dto.paging.PagingResponse;
 import com.giveitup.giveitup_be.dto.request.ApiResponse;
+import com.giveitup.giveitup_be.dto.request.SearchListUserRequest;
 import com.giveitup.giveitup_be.dto.request.UserCreationRequest;
 import com.giveitup.giveitup_be.dto.request.UserUpdateRequest;
 import com.giveitup.giveitup_be.dto.response.UserResponse;
@@ -10,6 +12,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,18 +26,35 @@ public class UserController {
     UserService userService;
 
     @PostMapping
-    ApiResponse<UserResponse> createUser(@Valid @RequestBody  UserCreationRequest request) {
+    ApiResponse<UserResponse> createUser(@Valid @RequestBody UserCreationRequest request) {
         return ApiResponse.<UserResponse>builder()
                 .result(userService.createUser(request))
                 .build();
     }
 
     @GetMapping
-    ApiResponse<List<UserResponse>> getUsers() {
-        return ApiResponse.<List<UserResponse>>builder()
-                .result(userService.getUsers())
+    public ApiResponse<PagingResponse<UserResponse>> getUsers(@ModelAttribute SearchListUserRequest request) {
+        Page<UserResponse> page = userService.getUsers(request);
+
+        PagingResponse.PagingInfo paging = PagingResponse.PagingInfo.builder()
+                .CurrentPage(request.getCurrentPage())
+                .NumberOfRecord(request.getPageSize())
+                .TotalRecord(page.getTotalElements())
+                .TotalPages(page.getTotalPages())
+                .build();
+
+        PagingResponse<UserResponse> pagingResponse = PagingResponse.<UserResponse>builder()
+                .Paging(paging)
+                .Data(page.getContent())
+                .build();
+
+        return ApiResponse.<PagingResponse<UserResponse>>builder()
+//                .code(200)
+//                .message("Success")
+                .result(pagingResponse)
                 .build();
     }
+
 
     @GetMapping("/{userId}")
     ApiResponse<UserResponse> getUser(@PathVariable("userId") String userId) {

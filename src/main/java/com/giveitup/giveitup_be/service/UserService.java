@@ -1,6 +1,6 @@
 package com.giveitup.giveitup_be.service;
 
-import com.giveitup.giveitup_be.constant.PredefinedRole;
+import com.giveitup.giveitup_be.dto.request.SearchListUserRequest;
 import com.giveitup.giveitup_be.dto.request.UserCreationRequest;
 import com.giveitup.giveitup_be.dto.request.UserUpdateRequest;
 import com.giveitup.giveitup_be.dto.response.UserResponse;
@@ -11,18 +11,23 @@ import com.giveitup.giveitup_be.exception.ErrorCode;
 import com.giveitup.giveitup_be.mapper.UserMapper;
 import com.giveitup.giveitup_be.repository.RoleRepository;
 import com.giveitup.giveitup_be.repository.UserRepository;
+import com.giveitup.giveitup_be.specification.UserSpecification;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
 import java.util.List;
 
 @Service
@@ -90,9 +95,23 @@ public class UserService {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    public List<UserResponse> getUsers() {
-        log.info("In method get Users");
-        return userRepository.findAll().stream().map(userMapper::toUserResponse).toList();
+    public Page<UserResponse> getUsers(SearchListUserRequest request) {
+        Specification<UserEntity> spec = Specification.allOf(
+                UserSpecification.hasUsername(request.getUserName()),
+                UserSpecification.hasPhoneNumber(request.getPhoneNumber())
+        );
+        int pageIndex = Math.max(request.getCurrentPage() - 1, 0);
+        Pageable pageable = PageRequest.of(
+                pageIndex,
+                request.getPageSize(),
+                Sort.by("username").ascending()
+        );
+
+        Page<UserEntity> page = userRepository.findAll(spec, pageable);
+        log.info("Found {} users", page.getTotalElements());
+
+        return page.map(userMapper::toUserResponse);
+
     }
 
     @PreAuthorize("hasRole('ADMIN')")

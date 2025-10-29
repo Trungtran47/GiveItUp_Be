@@ -35,4 +35,7 @@ public class UserEntity {
 //    Set<RoleEntity> roleEntities;
     @ManyToOne(fetch = FetchType.LAZY)
     private RoleEntity role;
+
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    private Set<PostEntity> posts;
 }

@@ -1,6 +1,7 @@
 package com.giveitup.giveitup_be.mapper;
 
 
+import com.giveitup.giveitup_be.dto.request.SearchListUserRequest;
 import com.giveitup.giveitup_be.dto.request.UserCreationRequest;
 import com.giveitup.giveitup_be.dto.request.UserUpdateRequest;
 import com.giveitup.giveitup_be.dto.response.UserResponse;

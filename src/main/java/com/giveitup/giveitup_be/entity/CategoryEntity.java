@@ -22,8 +22,9 @@ public class CategoryEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
-
+    @Column(columnDefinition = "NVARCHAR(255)")
     String categoryName;
+    @Column(columnDefinition = "NVARCHAR(MAX)")
     String description;
     Long projectCount;
     Long status;
@@ -37,4 +38,8 @@ public class CategoryEntity {
 
     @OneToMany(mappedBy = "category", fetch = FetchType.LAZY)
     private Set<PostEntity> posts;
+
+    @OneToMany(mappedBy = "category", fetch = FetchType.LAZY)
+    private Set<UserEntity> users;
+
 }

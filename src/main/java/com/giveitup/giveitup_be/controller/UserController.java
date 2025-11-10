@@ -1,10 +1,7 @@
 package com.giveitup.giveitup_be.controller;
 
 import com.giveitup.giveitup_be.dto.paging.PagingResponse;
-import com.giveitup.giveitup_be.dto.request.ApiResponse;
-import com.giveitup.giveitup_be.dto.request.SearchListUserRequest;
-import com.giveitup.giveitup_be.dto.request.UserCreationRequest;
-import com.giveitup.giveitup_be.dto.request.UserUpdateRequest;
+import com.giveitup.giveitup_be.dto.request.*;
 import com.giveitup.giveitup_be.dto.response.UserResponse;
 import com.giveitup.giveitup_be.service.UserService;
 import jakarta.validation.Valid;
@@ -82,4 +79,14 @@ public class UserController {
                 .result(userService.updateUser(userId, request))
                 .build();
     }
-}
+    @PutMapping(value = "/register/author/{userId}", consumes = {"multipart/form-data"})
+    public ApiResponse<UserResponse> createAuthor(
+            @PathVariable Long userId,
+            @ModelAttribute AuthorCreationRequest request // dùng @ModelAttribute để nhận cả file + text
+    ) {
+        return ApiResponse.<UserResponse>builder()
+                .result(userService.registerAuthor(userId,request))
+                .build();
+    }
+    }
+

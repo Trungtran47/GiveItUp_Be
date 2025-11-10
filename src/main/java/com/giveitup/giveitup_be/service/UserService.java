@@ -1,14 +1,18 @@
 package com.giveitup.giveitup_be.service;
 
+import com.giveitup.giveitup_be.dto.request.AuthorCreationRequest;
 import com.giveitup.giveitup_be.dto.request.SearchListUserRequest;
 import com.giveitup.giveitup_be.dto.request.UserCreationRequest;
 import com.giveitup.giveitup_be.dto.request.UserUpdateRequest;
 import com.giveitup.giveitup_be.dto.response.UserResponse;
+import com.giveitup.giveitup_be.entity.CategoryEntity;
 import com.giveitup.giveitup_be.entity.RoleEntity;
 import com.giveitup.giveitup_be.entity.UserEntity;
+import com.giveitup.giveitup_be.enums.UserStatus;
 import com.giveitup.giveitup_be.exception.AppException;
 import com.giveitup.giveitup_be.exception.ErrorCode;
 import com.giveitup.giveitup_be.mapper.UserMapper;
+import com.giveitup.giveitup_be.repository.CategoryRepository;
 import com.giveitup.giveitup_be.repository.RoleRepository;
 import com.giveitup.giveitup_be.repository.UserRepository;
 import com.giveitup.giveitup_be.specification.UserSpecification;
@@ -28,7 +32,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -39,6 +45,48 @@ public class UserService {
     RoleRepository roleRepository;
     UserMapper userMapper;
     PasswordEncoder passwordEncoder;
+    CloudinaryService cloudinaryService;
+    CategoryRepository categoryRepository;
+//
+public UserResponse registerAuthor(Long userId, AuthorCreationRequest request) {
+    UserEntity userEntity = userRepository.findById(String.valueOf(userId))
+            .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+    CategoryEntity categoryEntity = categoryRepository.findById(request.getCategory()).orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_EXISTED));
+    if (request.getOrganizationLogo() != null && !request.getOrganizationLogo().isEmpty()) {
+        // Upload file mới
+        Map<String, String> uploadResult = cloudinaryService.uploadImage(
+                request.getOrganizationLogo(), "GiveItUp/images");
+        if (userEntity.getOrganizationLogoPublicId() != null) {
+            cloudinaryService.deleteFile(userEntity.getOrganizationLogoPublicId(), true);
+        }
+        userEntity.setOrganizationLogo(uploadResult.get("url"));
+        userEntity.setOrganizationLogoPublicId(uploadResult.get("public_id"));
+    } else if (request.getOrganizationLogoUrl() != null) {
+        // Nếu gửi URL cũ thì giữ nguyên
+        userEntity.setOrganizationLogo(request.getOrganizationLogoUrl());
+    }
+    if (request.getVerificationFile() != null && !request.getVerificationFile().isEmpty()) {
+        Map<String, String> uploadResult = cloudinaryService.uploadFile(
+                request.getVerificationFile(), "GiveItUp/files");
+        // Xóa file cũ nếu đã có
+        if (userEntity.getVerificationInfoPublicId() != null) {
+            cloudinaryService.deleteFile(userEntity.getVerificationInfoPublicId(), false);
+        }
+        userEntity.setVerificationFile(uploadResult.get("url"));
+        userEntity.setVerificationInfoPublicId(uploadResult.get("public_id"));
+    } else if (request.getVerificationFileUrl() != null) {
+        // Nếu gửi URL cũ thì giữ nguyên
+        userEntity.setVerificationFile(request.getVerificationFileUrl());
+    }
+    userMapper.updateAuthor(userEntity, request);
+    userEntity.setStatus(UserStatus.PENDING.getCode());
+    userEntity.setOrganizationCreatedAt(LocalDateTime.now());
+    userEntity.setCategory(categoryEntity);
+
+    return userMapper.toUserResponse(userRepository.save(userEntity));
+}
+
+
 
     public UserResponse createUser(UserCreationRequest request) {
         UserEntity userEntity = userMapper.toUser(request);
@@ -71,7 +119,6 @@ public class UserService {
         String name = context.getAuthentication().getName();
 
         UserEntity userEntity = userRepository.findByUsername(name).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-
         return userMapper.toUserResponse(userEntity);
     }
 

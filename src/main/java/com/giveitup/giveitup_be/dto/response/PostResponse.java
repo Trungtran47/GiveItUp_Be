@@ -13,16 +13,22 @@ import java.util.List;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class PostResponse {
+    Long id;
     String title;
     String description;
     Double targetAmount;
-    LocalDateTime startDate;
+    Double donatedAmount;
+//    LocalDateTime startDate;
     LocalDateTime endDate;
     Long status;
-    UserResponse user;
+    String statusName;
+    BankAccountResponse bankAccount;
+    UserPostResponse user;
     CategoryResponse category;
     // Thời gian tạo & cập nhật
     LocalDateTime createdAt;
     LocalDateTime updatedAt;
     List<ImageEntity> images;
+    String video;
+    String publicVideoId;
 }

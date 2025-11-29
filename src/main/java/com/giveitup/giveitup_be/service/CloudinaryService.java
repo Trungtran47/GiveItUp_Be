@@ -19,6 +19,24 @@ public class CloudinaryService {
     private final Cloudinary cloudinary;
 
     private static final String DEFAULT_FOLDER = "GiveItUp/images";
+    // ✅ Upload video và trả về URL + public_id
+    public Map<String, String> uploadVideo(MultipartFile file, String folder) {
+        Map<String, String> result = new HashMap<>();
+        try {
+            Map uploadResult = cloudinary.uploader().upload(
+                    file.getBytes(),
+                    ObjectUtils.asMap(
+                            "resource_type", "video", // resource_type = video
+                            "folder", folder != null ? folder : DEFAULT_FOLDER
+                    )
+            );
+            result.put("url", (String) uploadResult.get("secure_url"));
+            result.put("public_id", (String) uploadResult.get("public_id"));
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to upload video to Cloudinary", e);
+        }
+        return result;
+    }
 
     // ✅ Upload ảnh (image) và trả về URL + public_id
     public Map<String, String> uploadImage(MultipartFile file, String folder) {
@@ -59,11 +77,20 @@ public class CloudinaryService {
     }
 
     // ✅ Xóa ảnh hoặc file theo public_id
-    public void delete(String publicId, String resourceType) {
+    public void deleteImage(String publicId) {
         try {
-            cloudinary.uploader().destroy(publicId, ObjectUtils.asMap("resource_type", resourceType));
+            cloudinary.uploader().destroy(publicId, ObjectUtils.asMap("resource_type", "image"));
         } catch (IOException e) {
             throw new RuntimeException("Failed to delete from Cloudinary", e);
+        }
+    }
+    // Ví dụ xóa video
+    public void deleteVideo(String publicId) {
+        if (publicId == null || publicId.isEmpty()) return;
+        try {
+            cloudinary.uploader().destroy(publicId, ObjectUtils.asMap("resource_type", "video"));
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to delete video from Cloudinary", e);
         }
     }
     // ✅ Xóa file hoặc ảnh theo public_id

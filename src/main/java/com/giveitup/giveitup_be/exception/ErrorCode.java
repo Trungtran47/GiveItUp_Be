@@ -20,6 +20,8 @@ public enum ErrorCode {
     ROLE_NOT_EXISTED(1009, "Role does not exist", HttpStatus.BAD_REQUEST),
     POST_EXISTED(1010, "Post existed", HttpStatus.BAD_REQUEST),
     POST_NOT_EXISTED(1011, "Post not existed", HttpStatus.NOT_FOUND),
+    BANK_ACCOUNT_EXISTED(1012, "Bank account existed", HttpStatus.BAD_REQUEST),
+    BANK_ACCOUNT_NOT_EXISTED(1013, "Bank account not existed", HttpStatus.NOT_FOUND),
     ;
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {

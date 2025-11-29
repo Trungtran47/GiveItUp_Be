@@ -1,6 +1,5 @@
 package com.giveitup.giveitup_be.entity;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -9,7 +8,8 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -19,29 +19,32 @@ import java.util.Set;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
 @EntityListeners(AuditingEntityListener.class)
-public class CategoryEntity {
+public class BankAccountEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
-    @Column(columnDefinition = "NVARCHAR(255)")
-    String categoryName;
-    @Column(columnDefinition = "NVARCHAR(MAX)")
-    String description;
-    Long projectCount;
-    Long status;
 
-    @CreatedDate //  Tự động set khi tạo mới
+
+    String bankAccountNumber;  // Số tài khoản
+    String accountCode;           // Mã tài khoản
+    @Column(columnDefinition = "NVARCHAR(255)")
+    String accountHolderName;   // Chủ tài khoản
+    String bankName;
+    String phoneNumber;         // Số điện thoại
+    Long status;
+    // Thời gian tạo & cập nhật
+    @CreatedDate
     @Column(updatable = false)
     LocalDateTime createdAt;
 
-    @LastModifiedDate //  Tự động update khi có thay đổi
+    @LastModifiedDate
     LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "category", fetch = FetchType.LAZY)
-    @JsonManagedReference
-    private Set<PostEntity> posts;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    UserEntity user;
 
-    @OneToMany(mappedBy = "category", fetch = FetchType.LAZY)
-    private Set<UserEntity> users;
-
+    @OneToMany(mappedBy = "bankAccount", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<PostEntity> posts = new ArrayList<>();
 }

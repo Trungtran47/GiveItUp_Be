@@ -1,5 +1,7 @@
 package com.giveitup.giveitup_be.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -26,6 +28,7 @@ public class PostEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
     // Tiêu đề bài đăng
+
     @Column(nullable = false, columnDefinition = "NVARCHAR(255)")
     String title;
     @Column(columnDefinition = "NVARCHAR(MAX)")
@@ -34,12 +37,28 @@ public class PostEntity {
     Double targetAmount;
     @Column(nullable = false)
     Double donatedAmount;
-    LocalDateTime startDate;
+    // (Tuỳ chọn) Danh mục bài đăng: Trẻ em, Bệnh tật, Thiên tai, Giáo dục,...
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    @JsonBackReference
+    CategoryEntity category;
+//    LocalDateTime startDate;
     LocalDateTime endDate;
+    // Ảnh đại diện hoặc ảnh chính của bài đăng
+    @Builder.Default
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonManagedReference
+    List<ImageEntity> images = new ArrayList<>();
+    String video;
+    String publicVideoId;
+
 
     // Trạng thái bài đăng (VD: ACTIVE, CLOSED, PENDING)
     Long status;
+    String statusName;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    BankAccountEntity bankAccount;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
@@ -52,19 +71,9 @@ public class PostEntity {
     @LastModifiedDate
     LocalDateTime updatedAt;
 
-
-    // (Tuỳ chọn) Danh mục bài đăng: Trẻ em, Bệnh tật, Thiên tai, Giáo dục,...
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id")
-    CategoryEntity category;
-
     // Danh sách chuyển khoản
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     List<DonateEntity> donations = new ArrayList<>();
 
-
-    // Ảnh đại diện hoặc ảnh chính của bài đăng
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
-    List<ImageEntity> images = new ArrayList<>();
 
 }

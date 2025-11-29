@@ -3,6 +3,7 @@ package com.giveitup.giveitup_be.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
@@ -20,17 +21,15 @@ public class DonateEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
+    // code
+    Long paymentCode;
     // Số tiền donate
     @Column(nullable = false)
     Double amount;
-    // Ngày donate
-    @Column(nullable = false)
-    LocalDateTime donatedAt;
     // Status
-    @Column(nullable = false)
-    Long status;
+//    boolean isShow;
     // Nội dung chuyển khoảng
-    String title;
+    String description;
     // Người donate (nhiều donation có thể thuộc về 1 user)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -39,4 +38,8 @@ public class DonateEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id", nullable = false)
     PostEntity post;
+    // Ngày donate
+    @CreatedDate
+    @Column(nullable = false)
+    LocalDateTime donatedAt;
 }

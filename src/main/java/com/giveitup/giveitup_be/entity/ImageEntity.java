@@ -1,5 +1,6 @@
 package com.giveitup.giveitup_be.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -29,5 +30,6 @@ public class ImageEntity {
     // Mối quan hệ với Post
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id", nullable = false)
+    @JsonBackReference
     PostEntity post;
 }

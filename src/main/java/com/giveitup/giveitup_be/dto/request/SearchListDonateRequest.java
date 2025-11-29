@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -16,14 +15,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @SuperBuilder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class SearchListPostRequest extends BasePagingRequest {
-    Long userId;
-    String postTitle;
-    String status;
-    Long categoryId;
-    boolean random;
-    boolean sortTargetAmount;
-    boolean sortDonatedAmount;
-    LocalDateTime endDate;
-    LocalDateTime createdAt;
+public class SearchListDonateRequest extends BasePagingRequest {
+    private Long userId;
+    private boolean isSortTotalAmount = false; // mới
 }

@@ -31,41 +31,20 @@ import java.util.List;
 public class PostController {
     PostService postService;
 
-    @PostMapping(
-            path = "/create",
-            consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
-            produces = MediaType.APPLICATION_JSON_VALUE
-    )
-    public ApiResponse<PostResponse> createPost(
-            @ModelAttribute PostRequest request,
-            @Parameter(
-                    description = "Danh sách ảnh bài viết",
-                    content = @Content(
-                            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
-                            array = @ArraySchema(schema = @Schema(type = "string", format = "binary"))
-                    )
-            )
-            @RequestParam(value = "files", required = false)  MultipartFile[]  files,
-            @Parameter(description = "Chỉ số ảnh thumbnail (0-based)")
-            @RequestParam(value = "thumbIndex", required = false) boolean thumbIndex
-    ) {
+    @PostMapping(path = "/create", consumes = {"multipart/form-data"})
+    public ApiResponse<PostResponse> createPost(@ModelAttribute PostRequest request) {
         return ApiResponse.<PostResponse>builder()
-                .result(postService.createPost(request, files, thumbIndex))
+                .result(postService.createPost(request))
                 .build();
     }
 
-    @PutMapping("/{postId}")
-    ApiResponse<PostResponse> updatePost(
-            @PathVariable Long postId,
-            @ModelAttribute PostRequest request,
-            @RequestParam(value = "files", required = false) MultipartFile[] files,
-            @RequestParam(value = "thumbIndex", required = false) boolean thumbIndex
-    ) {
+    @PutMapping(path ="/update/{postId}", consumes = {"multipart/form-data"})
+    public ApiResponse<PostResponse> updatePost(@PathVariable Long postId, @ModelAttribute PostRequest request) {
         return ApiResponse.<PostResponse>builder()
-                .result(postService.updatePost(postId,request, files, thumbIndex))
+                .result(postService.updatePost(postId,request))
                 .build();
     }
-    @DeleteMapping("/{postId}")
+    @DeleteMapping("/delete/{postId}")
     ApiResponse<String> deletePost(@PathVariable Long postId) {
         postService.deletePost(postId);
         return ApiResponse.<String>builder()
@@ -73,12 +52,8 @@ public class PostController {
                 .build();
     }
     @GetMapping("/user/{userId}")
-  ApiResponse<PagingResponse<PostResponse>> getPostByUser(
-            @PathVariable Long userId,
-            SearchListPostRequest request
-    ) {
+    ApiResponse<PagingResponse<PostResponse>> getPostByUser(@PathVariable Long userId, SearchListPostRequest request) {
         Page<PostResponse> page = postService.getPostByUserId(userId,request);
-
         PagingResponse.PagingInfo paging = PagingResponse.PagingInfo.builder()
                 .CurrentPage(request.getCurrentPage())
                 .NumberOfRecord(request.getPageSize())
@@ -95,8 +70,27 @@ public class PostController {
                 .build();
     }
     @GetMapping
-    ApiResponse<PagingResponse<PostResponse>> getPosts(SearchListPostRequest request) {
+    ApiResponse<PagingResponse<PostResponse>> getPosts(@ModelAttribute SearchListPostRequest request) {
         Page<PostResponse> page = postService.getPosts(request);
+
+        PagingResponse.PagingInfo paging = PagingResponse.PagingInfo.builder()
+                .CurrentPage(request.getCurrentPage())
+                .NumberOfRecord(request.getPageSize())
+                .TotalRecord(page.getTotalElements())
+                .TotalPages(page.getTotalPages())
+                .build();
+
+        PagingResponse<PostResponse> pagingResponse = PagingResponse.<PostResponse>builder()
+                .Paging(paging)
+                .Data(page.getContent())
+                .build();
+        return ApiResponse.<PagingResponse<PostResponse>>builder()
+                .result(pagingResponse)
+                .build();
+    }
+    @GetMapping("/categoryId/{categoryId}")
+    ApiResponse<PagingResponse<PostResponse>> getPostsByCategoryId(@PathVariable Long categoryId,@ModelAttribute SearchListPostRequest request) {
+        Page<PostResponse> page = postService.getPostsByCategory(categoryId, request);
 
         PagingResponse.PagingInfo paging = PagingResponse.PagingInfo.builder()
                 .CurrentPage(request.getCurrentPage())

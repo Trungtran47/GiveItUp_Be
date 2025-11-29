@@ -9,10 +9,15 @@ import org.mapstruct.MappingTarget;
 
 @Mapper(componentModel = "spring")
 public interface PostMapper {
-    PostEntity toPost(PostRequest request);
+    @Mapping(target = "category", ignore = true)
+    @Mapping(target = "images", ignore = true)
+    @Mapping(target = "video", ignore = true)
+    @Mapping(target = "bankAccount", ignore = true)
     @Mapping(target = "user", ignore = true)
+    PostEntity toPost(PostRequest request);
+//    @Mapping(target = "user", ignore = true)
     PostResponse toPostResponse(PostEntity response);
 
     //    @Mapping(target = "role", ignore = true)
-    void updatePost(@MappingTarget PostEntity postEntity, PostRequest request);
+//    void updatePost(@MappingTarget PostEntity postEntity, PostRequest request);
 }

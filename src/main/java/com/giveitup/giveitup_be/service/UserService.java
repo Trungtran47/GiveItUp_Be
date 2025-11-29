@@ -97,6 +97,7 @@ public UserResponse registerAuthor(Long userId, AuthorCreationRequest request) {
         userEntity.setGender(request.getGender());
         userEntity.setFirstName(request.getFirstName());
         userEntity.setLastName(request.getLastName());
+        userEntity.setStatus(UserStatus.USER.getCode());
 
 //        HashSet<RoleEntity> roleEntities = new HashSet<>();
 //        roleRepository.findById(PredefinedRole.USER_ROLE).ifPresent(roleEntities::add);

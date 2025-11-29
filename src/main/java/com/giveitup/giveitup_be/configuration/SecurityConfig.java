@@ -23,11 +23,22 @@ import org.springframework.web.filter.CorsFilter;
 @EnableMethodSecurity
 public class SecurityConfig {
     private final String[] PUBLIC_ENDPOINTS = {
-        "/users", "/auth/token", "/auth/introspect", "/auth/logout", "/auth/refresh"
+        "/users", "/auth/token", "/auth/introspect", "/auth/logout", "/auth/refresh", "/posts"
     };
 
     @Autowired
     private CustomJwtDecoder customJwtDecoder;
+    // === Webhook public (không auth) ===
+    @Bean
+    public SecurityFilterChain webhookFilterChain(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/webhook/**")   // áp dụng chỉ cho webhook
+                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+                .csrf(csrf -> csrf.disable())
+                .cors(Customizer.withDefaults());
+
+        return http.build();
+    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
@@ -35,6 +46,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(request -> request
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS).permitAll()
+                        // GET /posts public
+                        .requestMatchers(HttpMethod.GET, "/posts").permitAll()
                         .anyRequest().authenticated()
                 )
 

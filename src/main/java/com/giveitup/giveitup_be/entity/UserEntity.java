@@ -13,6 +13,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -72,11 +73,15 @@ public class UserEntity {
     //    @ManyToMany
 //    Set<RoleEntity> roleEntities;
     @ManyToOne(fetch = FetchType.LAZY)
-    private RoleEntity role;
+     RoleEntity role;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
-    private Set<PostEntity> posts;
+     Set<PostEntity> posts;
     // Danh sách chuển khoản đã ủng hộ cho bài post
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     List<DonateEntity> donations = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    List<BankAccountEntity> bankAccounts ;
+
 }

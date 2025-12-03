@@ -15,32 +15,29 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
-@Table(name = "donations")
 @EntityListeners(AuditingEntityListener.class)
-public class DonateEntity {
+@Table(name = "search_history")
+public class SearchHistoryEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
-    // code
-    Long paymentCode;
-    // Số tiền donate
-    @Column(nullable = false)
-    Double amount;
-    // Status
-//    boolean isShow;
-    // Nội dung chuyển khoảng
-    @Column( columnDefinition = "NVARCHAR(255)")
-    String description;
-    // Người donate (nhiều donation có thể thuộc về 1 user)
+
+    // Người dùng thực hiện tìm kiếm
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     UserEntity user;
-    // Bài post được donate (1 bài có thể có nhiều donation)
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "post_id", nullable = false)
-    PostEntity post;
-    // Ngày donate
+
+    // Nội dung tìm kiếm
+    @Column(nullable = false, columnDefinition = "NVARCHAR(255)")
+    String keyword;
+
+    // Loại tìm kiếm (tùy chọn: post, user, category…)
+    @Column(nullable = true)
+    String type;
+
+    // Thời gian tạo
     @CreatedDate
-    @Column(nullable = false)
-    LocalDateTime donatedAt;
+    @Column(updatable = false)
+    LocalDateTime createdAt;
 }

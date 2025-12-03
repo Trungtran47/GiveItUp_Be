@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.ColumnDefault;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -55,6 +56,7 @@ public class PostEntity {
 
     // Trạng thái bài đăng (VD: ACTIVE, CLOSED, PENDING)
     Long status;
+    @Column(columnDefinition = "NVARCHAR(MAX)")
     String statusName;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -71,9 +73,24 @@ public class PostEntity {
     @LastModifiedDate
     LocalDateTime updatedAt;
 
+    @Column(nullable = false)
+    @ColumnDefault("0")
+    private Long viewCount = 0L;
+    @Column(nullable = false)
+    @ColumnDefault("0")
+    private Long likeCount  = 0L;
     // Danh sách chuyển khoản
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     List<DonateEntity> donations = new ArrayList<>();
 
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<LikeEntity> likes = new ArrayList<>();
 
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<PostViewEntity> postViews = new ArrayList<>();
+
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<PostUpdateEntity> updates = new ArrayList<>();
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<PayoutEntity> payouts = new ArrayList<>();
 }

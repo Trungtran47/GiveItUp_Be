@@ -1,9 +1,10 @@
 package com.giveitup.giveitup_be.specification;
 
 import com.giveitup.giveitup_be.entity.CategoryEntity;
+import com.giveitup.giveitup_be.entity.LikeEntity;
 import com.giveitup.giveitup_be.entity.PostEntity;
-import jakarta.persistence.criteria.Expression;
-import jakarta.persistence.criteria.Order;
+import com.giveitup.giveitup_be.entity.UserEntity;
+import jakarta.persistence.criteria.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.util.StringUtils;
 
@@ -14,6 +15,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PostSpecification {
+    public static Specification<PostEntity> likedByUser(UserEntity user) {
+        return (root, query, criteriaBuilder) -> {
+            Join<PostEntity, LikeEntity> likes = root.join("likes", JoinType.INNER);
+            query.distinct(true); // tránh duplicate khi join
+            query.orderBy(criteriaBuilder.desc(likes.get("createdAt"))); // sort theo ngày like
+            return criteriaBuilder.equal(likes.get("user"), user);
+        };
+    }
+
+
     // PostSpecification.java
     public static Specification<PostEntity> hasCategory(Long categoryId) {
         return (root, query, builder) ->

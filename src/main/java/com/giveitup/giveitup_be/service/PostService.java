@@ -22,6 +22,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -41,6 +42,8 @@ public class PostService {
     CategoryRepository categoryRepository;
     BankAccountRepository bankAccountRepository;
     UserRepository userRepository;
+    PostViewService postViewService;
+    LikeRepository likeRepository;
     DonateRepository donateRepository;
     ImageRepository imageRepository;
     @PreAuthorize("hasRole('AUTHOR')")
@@ -266,15 +269,21 @@ public class PostService {
         Page<PostEntity> page = postRepository.findAll(spec, pageable);
         return page.map(postMapper::toPostResponse);
     }
+    @Transactional
     public PostResponse getPostById(Long postId) {
-
-        PostEntity postEntity = postRepository.findById(postId).orElseThrow(() -> new AppException(ErrorCode.POST_NOT_EXISTED));
-//        // Tính tổng donate của bài post
-//        Double totalAmount = donateRepository.sumAmountByPostId(postId);
-//        postEntity.setDonatedAmount(totalAmount);
-//        postRepository.save(postEntity);
-        return postMapper.toPostResponse(postEntity);
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        UserEntity user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        // lock row để tránh concurrency issues
+        PostEntity post = postRepository.findById(postId)
+                .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_EXISTED));
+        boolean liked = likeRepository.existsByPostIdAndUserId( post.getId(),user.getId());
+        postViewService.addView(user.getId(), post);
+        PostResponse res = postMapper.toPostResponse(post);
+        res.setLiked(liked);
+        return res;
     }
+
     public Page<PostResponse> getPostsByCategory(Long categoryId, SearchListPostRequest request) {
         Specification<PostEntity> spec = Specification.allOf(
                 PostSpecification.hasCategory(categoryId),

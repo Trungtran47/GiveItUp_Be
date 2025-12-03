@@ -79,7 +79,11 @@ public UserResponse registerAuthor(Long userId, AuthorCreationRequest request) {
         userEntity.setVerificationFile(request.getVerificationFileUrl());
     }
     userMapper.updateAuthor(userEntity, request);
-    userEntity.setStatus(UserStatus.PENDING.getCode());
+    if(request.getStatus() != null ){
+        userEntity.setStatus(request.getStatus());
+    }else {
+        userEntity.setStatus(UserStatus.PENDING.getCode());
+    }
     userEntity.setOrganizationCreatedAt(LocalDateTime.now());
     userEntity.setCategory(categoryEntity);
 
@@ -122,18 +126,37 @@ public UserResponse registerAuthor(Long userId, AuthorCreationRequest request) {
         UserEntity userEntity = userRepository.findByUsername(name).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
         return userMapper.toUserResponse(userEntity);
     }
-
+    public UserEntity getMyInfoReturnEntity() {
+        var context = SecurityContextHolder.getContext();
+        String name = context.getAuthentication().getName();
+        return userRepository.findByUsername(name).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+    }
     @PostAuthorize("returnObject.username == authentication.name")
-    public UserResponse updateUser(String userId, UserUpdateRequest request) {
-        UserEntity userEntity = userRepository.findById(userId).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-
+    public UserResponse updateUser(Long userId, UserUpdateRequest request) {
+        UserEntity userEntity = userRepository.findById(String.valueOf(userId)).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
         userMapper.updateUser(userEntity, request);
-        userEntity.setPassword(passwordEncoder.encode(request.getPassword()));
+        if (request.getPassword() != null && !request.getPassword().isBlank()) {
+            userEntity.setPassword(passwordEncoder.encode(request.getPassword()));
+        }
 
 //        var roles = roleRepository.findAllById(request.getRoles());
 //        userEntity.setRoleEntities(new HashSet<>(roles));
-        var roles = roleRepository.findById(request.getRoles()).orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
-        userEntity.setRole(roles);
+        // Kiểm tra role trước khi findById
+        if (request.getRoles() != null) {
+            var role = roleRepository.findById(request.getRoles())
+                    .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
+            userEntity.setRole(role);
+        }
+        if (request.getImageUser() != null && !request.getImageUser().isEmpty()) {
+            // Upload file mới
+            Map<String, String> uploadResult = cloudinaryService.uploadImage(
+                    request.getImageUser(), "GiveItUp/images_user");
+            if (userEntity.getImageUser() != null) {
+                cloudinaryService.deleteFile(userEntity.getImageUser(), true);
+            }
+            userEntity.setImageUser(uploadResult.get("url"));
+            userEntity.setPublicImageUserId(uploadResult.get("public_id"));
+        }
         return userMapper.toUserResponse(userRepository.save(userEntity));
     }
 

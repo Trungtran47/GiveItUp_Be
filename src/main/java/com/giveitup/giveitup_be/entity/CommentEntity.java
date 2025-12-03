@@ -7,6 +7,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -15,32 +16,39 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
-@Table(name = "donations")
 @EntityListeners(AuditingEntityListener.class)
-public class DonateEntity {
+@Table(name = "comments")
+public class CommentEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
-    // code
-    Long paymentCode;
-    // Số tiền donate
-    @Column(nullable = false)
-    Double amount;
-    // Status
-//    boolean isShow;
-    // Nội dung chuyển khoảng
-    @Column( columnDefinition = "NVARCHAR(255)")
-    String description;
-    // Người donate (nhiều donation có thể thuộc về 1 user)
+
+    // Nội dung bình luận
+    @Column(columnDefinition = "NVARCHAR(MAX)", nullable = false)
+    String content;
+
+    // Người bình luận
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id")
     UserEntity user;
-    // Bài post được donate (1 bài có thể có nhiều donation)
+
+    // Bài post
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "post_id", nullable = false)
+    @JoinColumn(name = "post_id")
     PostEntity post;
-    // Ngày donate
+
+    // Reply cho comment khác
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_comment_id")
+    CommentEntity parentComment;
+
+    // Danh sách reply
+    @OneToMany(mappedBy = "parentComment", cascade = CascadeType.ALL)
+    List<CommentEntity> replies;
+
+    // Thời gian tạo
     @CreatedDate
-    @Column(nullable = false)
-    LocalDateTime donatedAt;
+    @Column(updatable = false)
+    LocalDateTime createdAt;
 }

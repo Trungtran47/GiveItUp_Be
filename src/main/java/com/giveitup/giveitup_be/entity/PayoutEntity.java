@@ -15,32 +15,40 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
-@Table(name = "donations")
 @EntityListeners(AuditingEntityListener.class)
-public class DonateEntity {
+@Table(name = "payouts")
+public class PayoutEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
-    // code
-    Long paymentCode;
-    // Số tiền donate
+
+    // Bài post cần trao tiền
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "post_id")
+    PostEntity post;
+
+    // Số tiền admin chi
     @Column(nullable = false)
     Double amount;
-    // Status
-//    boolean isShow;
-    // Nội dung chuyển khoảng
-    @Column( columnDefinition = "NVARCHAR(255)")
-    String description;
-    // Người donate (nhiều donation có thể thuộc về 1 user)
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    UserEntity user;
-    // Bài post được donate (1 bài có thể có nhiều donation)
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "post_id", nullable = false)
-    PostEntity post;
-    // Ngày donate
-    @CreatedDate
+
+    // Lời nhắn/ghi chú
+    @Column(columnDefinition = "NVARCHAR(MAX)")
+    String note;
+
+    // Trạng thái: PENDING, AUTHOR_CONFIRMED, REJECTED
     @Column(nullable = false)
-    LocalDateTime donatedAt;
+    String status;
+
+    // Admin tạo chi tiền
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    UserEntity user;
+
+    // Author xác nhận
+    LocalDateTime confirmedAt;
+
+    @CreatedDate
+    @Column(updatable = false)
+    LocalDateTime createdAt;
 }

@@ -24,6 +24,9 @@ public class UserResponse {
     String email;
     Long phoneNumber;
     String role;
+    String address;
+    String imageUser;
+    String publicImageUserId;
     // Thời gian tạo & cập nhật
     LocalDateTime createdAt;
     LocalDateTime updatedAt;

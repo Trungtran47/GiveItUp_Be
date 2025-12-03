@@ -54,14 +54,9 @@ public class DonateService {
         return donateMapper.toDonateResponse(savedDonate);
     }
     public Page<DonateResponse> getDonate(SearchListDonateRequest request){
-//        if(Boolean.TRUE.equals(request.isSortTotalAmount())){
-//            // Tổng hợp theo user
-//            return getDonateTotalAmount(request);
-//        } else {
             Specification<DonateEntity> spec = Specification.allOf(
                     DonateSpecification.hasUserId(request.getUserId())
             );
-            ;
             int pageIndex = Math.max(request.getCurrentPage() - 1, 0);
             Pageable pageable = PageRequest.of(
                     pageIndex,
@@ -81,7 +76,6 @@ public class DonateService {
         );
         return donateRepository.findTotalAmountByPost(postId, pageable);
     }
-
 
 
 }

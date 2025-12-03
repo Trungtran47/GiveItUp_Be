@@ -25,4 +25,5 @@ public class AuthorCreationRequest {
     String organizationPhone;      // Số điện thoại tổ chức
     String linkInfoOrganization;   // link thông tin group/ fb
     String organizationDescription; // mô ta tổ chức
+    Long status;
 }

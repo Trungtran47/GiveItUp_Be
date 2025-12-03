@@ -41,8 +41,11 @@ public class UserEntity {
     String email;
     String phoneNumber;
     Long gender;
-
-    // 🟢 Thông tin cho tổ chức hoặc nhóm từ thiện
+    @Column( columnDefinition = "NVARCHAR(255)")
+    String address;
+    String imageUser;
+    String publicImageUserId;
+    //  Thông tin cho tổ chức hoặc nhóm từ thiện
     Long status = (long) UserStatus.USER.getCode();
     String organizationLogo;
     String organizationLogoPublicId;
@@ -83,5 +86,20 @@ public class UserEntity {
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     List<BankAccountEntity> bankAccounts ;
+    // bản like
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<LikeEntity> likes = new ArrayList<>();
+    // view
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<PostViewEntity> postViews = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<PayoutEntity> payouts = new ArrayList<>();
+
+    @OneToMany(mappedBy = "follower", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<FollowEntity> following = new ArrayList<>();
+
+    @OneToMany(mappedBy = "following", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<FollowEntity> followers = new ArrayList<>();
 
 }

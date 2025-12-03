@@ -15,7 +15,7 @@ public interface PostMapper {
     @Mapping(target = "bankAccount", ignore = true)
     @Mapping(target = "user", ignore = true)
     PostEntity toPost(PostRequest request);
-//    @Mapping(target = "user", ignore = true)
+    @Mapping(target = "liked", ignore = true)
     PostResponse toPostResponse(PostEntity response);
 
     //    @Mapping(target = "role", ignore = true)

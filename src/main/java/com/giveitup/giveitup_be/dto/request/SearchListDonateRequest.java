@@ -17,5 +17,4 @@ import java.time.LocalDateTime;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class SearchListDonateRequest extends BasePagingRequest {
     private Long userId;
-    private boolean isSortTotalAmount = false; // mới
 }

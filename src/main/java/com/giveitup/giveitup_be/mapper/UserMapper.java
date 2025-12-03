@@ -10,8 +10,12 @@ import com.giveitup.giveitup_be.entity.UserEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 
-@Mapper(componentModel = "spring")
+@Mapper(
+        componentModel = "spring",
+        nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE
+)
 public interface UserMapper {
     @Mapping(source = "role", target = "role.name")
     UserEntity toUser(UserCreationRequest request);
@@ -20,6 +24,7 @@ public interface UserMapper {
     UserResponse toUserResponse(UserEntity userEntity);
 
     @Mapping(target = "role", ignore = true)
+    @Mapping(target = "imageUser", ignore = true)
     void updateUser(@MappingTarget UserEntity userEntity, UserUpdateRequest request);
 
     @Mapping(target = "role", ignore = true)

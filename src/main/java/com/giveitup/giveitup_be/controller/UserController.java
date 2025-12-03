@@ -73,8 +73,8 @@ public class UserController {
         return ApiResponse.<String>builder().result("User has been deleted").build();
     }
 
-    @PutMapping("/{userId}")
-    ApiResponse<UserResponse> updateUser(@PathVariable String userId, @RequestBody UserUpdateRequest request) {
+    @PutMapping(value = "/{userId}", consumes = {"multipart/form-data"})
+    ApiResponse<UserResponse> updateUser(@PathVariable Long userId, @ModelAttribute UserUpdateRequest request) {
         return ApiResponse.<UserResponse>builder()
                 .result(userService.updateUser(userId, request))
                 .build();

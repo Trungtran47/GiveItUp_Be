@@ -22,6 +22,7 @@ public enum ErrorCode {
     POST_NOT_EXISTED(1011, "Post not existed", HttpStatus.NOT_FOUND),
     BANK_ACCOUNT_EXISTED(1012, "Bank account existed", HttpStatus.BAD_REQUEST),
     BANK_ACCOUNT_NOT_EXISTED(1013, "Bank account not existed", HttpStatus.NOT_FOUND),
+    PARENT_COMMENT_NOT_FOUND(1014, "Parent comment not existed", HttpStatus.NOT_FOUND),
     ;
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {

@@ -33,7 +33,7 @@ public class PostViewService {
     UserRepository userRepository;
     PostMapper postMapper;
     public void addView( Long userId,PostEntity post) {
-        UserEntity user = userRepository.findById(String.valueOf(userId))
+        UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
         // Kiểm tra xem user đã có record PostView chưa
         PostViewEntity postView = postViewRepository.findByPostIdAndUserId(post.getId(), userId)
@@ -56,7 +56,7 @@ public class PostViewService {
 //    }
 //    public voide deleteAll
     public Page<PostResponse> getPostsViewByUserId(Long userId, BasePagingRequest request) {
-        UserEntity user = userRepository.findById(String.valueOf(userId))
+        UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         int pageIndex = Math.max(request.getCurrentPage() - 1, 0);

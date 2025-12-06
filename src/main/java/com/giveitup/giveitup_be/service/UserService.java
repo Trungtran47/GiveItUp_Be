@@ -49,7 +49,7 @@ public class UserService {
     CategoryRepository categoryRepository;
 //
 public UserResponse registerAuthor(Long userId, AuthorCreationRequest request) {
-    UserEntity userEntity = userRepository.findById(String.valueOf(userId))
+    UserEntity userEntity = userRepository.findById(userId)
             .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
     CategoryEntity categoryEntity = categoryRepository.findById(request.getCategory()).orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_EXISTED));
     if (request.getOrganizationLogo() != null && !request.getOrganizationLogo().isEmpty()) {
@@ -133,7 +133,7 @@ public UserResponse registerAuthor(Long userId, AuthorCreationRequest request) {
     }
     @PostAuthorize("returnObject.username == authentication.name")
     public UserResponse updateUser(Long userId, UserUpdateRequest request) {
-        UserEntity userEntity = userRepository.findById(String.valueOf(userId)).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        UserEntity userEntity = userRepository.findById(userId).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
         userMapper.updateUser(userEntity, request);
         if (request.getPassword() != null && !request.getPassword().isBlank()) {
             userEntity.setPassword(passwordEncoder.encode(request.getPassword()));
@@ -152,7 +152,7 @@ public UserResponse registerAuthor(Long userId, AuthorCreationRequest request) {
             Map<String, String> uploadResult = cloudinaryService.uploadImage(
                     request.getImageUser(), "GiveItUp/images_user");
             if (userEntity.getImageUser() != null) {
-                cloudinaryService.deleteFile(userEntity.getImageUser(), true);
+                cloudinaryService.deleteFile(userEntity.getPublicImageUserId(), true);
             }
             userEntity.setImageUser(uploadResult.get("url"));
             userEntity.setPublicImageUserId(uploadResult.get("public_id"));
@@ -161,7 +161,7 @@ public UserResponse registerAuthor(Long userId, AuthorCreationRequest request) {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    public void deleteUser(String userId) {
+    public void deleteUser(Long userId) {
         userRepository.deleteById(userId);
     }
 
@@ -186,7 +186,7 @@ public UserResponse registerAuthor(Long userId, AuthorCreationRequest request) {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    public UserResponse getUser(String id) {
+    public UserResponse getUser(Long id) {
         return userMapper.toUserResponse(
                 userRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED)));
     }

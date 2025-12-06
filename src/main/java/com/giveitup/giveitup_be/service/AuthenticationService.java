@@ -7,7 +7,6 @@ import com.giveitup.giveitup_be.dto.request.LogoutRequest;
 import com.giveitup.giveitup_be.dto.request.RefreshRequest;
 import com.giveitup.giveitup_be.dto.response.AuthenticationResponse;
 import com.giveitup.giveitup_be.dto.response.IntrospectResponse;
-import com.giveitup.giveitup_be.dto.response.RoleResponse;
 import com.giveitup.giveitup_be.entity.InvalidatedTokenEntity;
 import com.giveitup.giveitup_be.entity.RoleEntity;
 import com.giveitup.giveitup_be.entity.UserEntity;
@@ -36,7 +35,6 @@ import java.text.ParseException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
-import java.util.Set;
 import java.util.StringJoiner;
 import java.util.UUID;
 

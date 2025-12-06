@@ -93,8 +93,12 @@ public class UserEntity {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     List<PostViewEntity> postViews = new ArrayList<>();
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    List<PayoutEntity> payouts = new ArrayList<>();
+    @OneToMany(mappedBy = "requestedBy", cascade = CascadeType.ALL)
+    List<PayoutEntity> payoutRequests = new ArrayList<>();
+
+    @OneToMany(mappedBy = "createdByAdmin", cascade = CascadeType.ALL)
+    List<PayoutEntity> payoutTransfers = new ArrayList<>();
+
 
     @OneToMany(mappedBy = "follower", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<FollowEntity> following = new ArrayList<>();

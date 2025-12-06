@@ -14,7 +14,6 @@ import com.giveitup.giveitup_be.repository.DonateRepository;
 import com.giveitup.giveitup_be.repository.PostRepository;
 import com.giveitup.giveitup_be.repository.UserRepository;
 import com.giveitup.giveitup_be.specification.DonateSpecification;
-import com.giveitup.giveitup_be.specification.PostSpecification;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -24,7 +23,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -41,7 +39,7 @@ public class DonateService {
         DonateEntity donateEntity = donateMapper.toDonate(request);
         PostEntity postEntity = postRepository.findById(request.getPostId())
                 .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_EXISTED));
-        UserEntity userEntity = userRepository.findById(String.valueOf(request.getUserId()))
+        UserEntity userEntity = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
         donateEntity.setPost(postEntity);
         donateEntity.setUser(userEntity);

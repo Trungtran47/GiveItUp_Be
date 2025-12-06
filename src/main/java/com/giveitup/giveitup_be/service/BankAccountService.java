@@ -1,9 +1,7 @@
 package com.giveitup.giveitup_be.service;
 
 import com.giveitup.giveitup_be.dto.request.BankAccountRequest;
-import com.giveitup.giveitup_be.dto.request.SearchListUserRequest;
 import com.giveitup.giveitup_be.dto.response.BankAccountResponse;
-import com.giveitup.giveitup_be.dto.response.UserResponse;
 import com.giveitup.giveitup_be.entity.BankAccountEntity;
 import com.giveitup.giveitup_be.entity.UserEntity;
 import com.giveitup.giveitup_be.enums.BankAccountStatus;
@@ -12,17 +10,11 @@ import com.giveitup.giveitup_be.exception.ErrorCode;
 import com.giveitup.giveitup_be.mapper.BankAccountMapper;
 import com.giveitup.giveitup_be.repository.BankAccountRepository;
 import com.giveitup.giveitup_be.repository.UserRepository;
-import com.giveitup.giveitup_be.specification.UserSpecification;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
@@ -39,7 +31,7 @@ public class BankAccountService {
     @PreAuthorize("hasRole('AUTHOR')")
     public BankAccountResponse createBankAccount(BankAccountRequest request) {
         BankAccountEntity bankAccountEntity = bankAccountMapper.toBankAccount(request);
-        UserEntity userEntity = userRepository.findById(String.valueOf(request.getUser())).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        UserEntity userEntity = userRepository.findById(request.getUser()).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
         bankAccountEntity.setUser(userEntity);
         bankAccountEntity.setStatus(BankAccountStatus.ACTIVE.getCode());
         try {
@@ -53,7 +45,7 @@ public class BankAccountService {
     @PreAuthorize("hasRole('AUTHOR')")
     public BankAccountResponse updateBankAccount(BankAccountRequest request) {
         BankAccountEntity bankAccountEntity = bankAccountRepository.findById(request.getId()).orElseThrow(() -> new AppException(ErrorCode.BANK_ACCOUNT_NOT_EXISTED));
-        UserEntity userEntity = userRepository.findById(String.valueOf(request.getUser())).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        UserEntity userEntity = userRepository.findById(request.getUser()).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
         bankAccountEntity.setUser(userEntity);
         bankAccountEntity.setStatus(BankAccountStatus.ACTIVE.getCode());
         bankAccountEntity.setBankAccountNumber(request.getBankAccountNumber());

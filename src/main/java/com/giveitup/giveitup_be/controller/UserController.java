@@ -12,8 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/users")
 @RequiredArgsConstructor
@@ -54,7 +52,7 @@ public class UserController {
 
 
     @GetMapping("/{userId}")
-    ApiResponse<UserResponse> getUser(@PathVariable("userId") String userId) {
+    ApiResponse<UserResponse> getUser(@PathVariable("userId") Long userId) {
         return ApiResponse.<UserResponse>builder()
                 .result(userService.getUser(userId))
                 .build();
@@ -68,7 +66,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{userId}")
-    ApiResponse<String> deleteUser(@PathVariable String userId) {
+    ApiResponse<String> deleteUser(@PathVariable Long userId) {
         userService.deleteUser(userId);
         return ApiResponse.<String>builder().result("User has been deleted").build();
     }

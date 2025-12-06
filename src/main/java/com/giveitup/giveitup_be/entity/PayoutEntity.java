@@ -23,32 +23,51 @@ public class PayoutEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
 
-    // Bài post cần trao tiền
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "post_id")
-    PostEntity post;
 
-    // Số tiền admin chi
     @Column(nullable = false)
     Double amount;
+    Double adminTransferAmount;
 
-    // Lời nhắn/ghi chú
     @Column(columnDefinition = "NVARCHAR(MAX)")
     String note;
 
-    // Trạng thái: PENDING, AUTHOR_CONFIRMED, REJECTED
     @Column(nullable = false)
-    String status;
+    Long status; // Enum: PENDING, ADMIN_APPROVED, AUTHOR_CONFIRMED, TRANSFERRED, REJECTED, CANCELED
 
-    // Admin tạo chi tiền
+    // Kiểu: REQUEST (author tạo) / ADMIN_AUTO (admin tự trả)
+    @Column(nullable = false)
+    String type;
+
+    // Author tạo request
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    UserEntity user;
+    @JoinColumn(name = "requested_by")
+    UserEntity requestedBy;
 
-    // Author xác nhận
+    LocalDateTime requestedAt;
+
+    // Lý do từ chối
+    @Column(columnDefinition = "NVARCHAR(MAX)")
+    String noteAdmin;
+    String transferProofImageUrl;
+    String transferProofImagePublicId;
+    // Admin tạo payout (thực hiện chuyển khoản)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by_admin")
+    UserEntity createdByAdmin;
+    LocalDateTime createdByAdminAt;
+
+    // Author xác nhận đã nhận tiền
     LocalDateTime confirmedAt;
 
     @CreatedDate
     @Column(updatable = false)
     LocalDateTime createdAt;
+
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "post_id")
+    PostEntity post;
+    @OneToOne(mappedBy = "payout")
+    PostUpdateEntity postUpdate;
+
 }

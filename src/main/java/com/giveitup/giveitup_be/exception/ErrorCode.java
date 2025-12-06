@@ -23,6 +23,12 @@ public enum ErrorCode {
     BANK_ACCOUNT_EXISTED(1012, "Bank account existed", HttpStatus.BAD_REQUEST),
     BANK_ACCOUNT_NOT_EXISTED(1013, "Bank account not existed", HttpStatus.NOT_FOUND),
     PARENT_COMMENT_NOT_FOUND(1014, "Parent comment not existed", HttpStatus.NOT_FOUND),
+    NOT_AUTHOR(1015, "You don't own", HttpStatus.NOT_FOUND),
+    PAYOUT_NOT_FOUND(1016, "Payout not found", HttpStatus.NOT_FOUND),
+    PAYOUT_INVALID_STATE(1017, "Payout is not in a valid state", HttpStatus.BAD_REQUEST),
+    PAYOUT_CANNOT_UPDATE(1018, "Payouts can be updated", HttpStatus.BAD_REQUEST),
+    PAYOUT_CANNOT_CONFIRM(1019, "Payout must be TRANSFERRED before confirming", HttpStatus.BAD_REQUEST),
+    POST_UPDATE_NOT_EXISTED(1020, "PostUpdate not existed", HttpStatus.NOT_FOUND),
     ;
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {

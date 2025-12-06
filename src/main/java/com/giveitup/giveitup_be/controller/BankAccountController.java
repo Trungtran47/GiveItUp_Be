@@ -2,9 +2,7 @@ package com.giveitup.giveitup_be.controller;
 
 import com.giveitup.giveitup_be.dto.request.ApiResponse;
 import com.giveitup.giveitup_be.dto.request.BankAccountRequest;
-import com.giveitup.giveitup_be.dto.request.PostRequest;
 import com.giveitup.giveitup_be.dto.response.BankAccountResponse;
-import com.giveitup.giveitup_be.dto.response.PostResponse;
 import com.giveitup.giveitup_be.service.BankAccountService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;

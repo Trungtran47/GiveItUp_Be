@@ -37,4 +37,6 @@ public interface PostRepository extends JpaRepository<PostEntity, Long>, JpaSpec
             @Param("user") UserEntity user,
             Pageable pageable
     );
+
+    List<PostEntity> findByTitleContainingIgnoreCase(String keyword);
 }

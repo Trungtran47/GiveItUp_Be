@@ -3,9 +3,7 @@ package com.giveitup.giveitup_be.controller;
 import com.giveitup.giveitup_be.dto.request.ApiResponse;
 import com.giveitup.giveitup_be.dto.request.CommentRequest;
 import com.giveitup.giveitup_be.dto.request.CommentResponse;
-import com.giveitup.giveitup_be.dto.response.LikeResponse;
 import com.giveitup.giveitup_be.service.CommentService;
-import com.giveitup.giveitup_be.service.LikeService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -38,7 +36,7 @@ public class CommentController {
     public ApiResponse<String> deleteComment(@PathVariable Long commentId, @PathVariable Long userId) {
         commentService.deleteComment(userId,commentId);
         return ApiResponse.<String>builder()
-                .result("Post has been deleted")
+                .result("Comment has been deleted")
                 .build();
     }
 }

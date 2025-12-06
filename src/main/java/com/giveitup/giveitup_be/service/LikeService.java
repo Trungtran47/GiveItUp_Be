@@ -71,7 +71,7 @@ public class LikeService {
     }
 
     public Page<PostResponse> getPostsByUserId(Long userId, BasePagingRequest request) {
-        UserEntity user = userRepository.findById(String.valueOf(userId))
+        UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         int pageIndex = Math.max(request.getCurrentPage() - 1, 0);

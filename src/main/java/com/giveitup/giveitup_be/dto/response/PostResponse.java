@@ -36,4 +36,5 @@ public class PostResponse {
     List<ImageEntity> images;
     String video;
     String publicVideoId;
+    List<PayoutResponse> payouts;
 }

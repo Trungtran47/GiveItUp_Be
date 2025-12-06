@@ -2,12 +2,15 @@ package com.giveitup.giveitup_be.service;
 
 import com.giveitup.giveitup_be.dto.request.PostRequest;
 import com.giveitup.giveitup_be.dto.request.SearchListPostRequest;
+import com.giveitup.giveitup_be.dto.response.PayoutResponse;
 import com.giveitup.giveitup_be.dto.response.PostResponse;
 import com.giveitup.giveitup_be.entity.*;
+import com.giveitup.giveitup_be.enums.PayoutStatus;
 import com.giveitup.giveitup_be.enums.PostStatus;
 import com.giveitup.giveitup_be.exception.AppException;
 import com.giveitup.giveitup_be.exception.ErrorCode;
 import com.giveitup.giveitup_be.mapper.PostMapper;
+import com.giveitup.giveitup_be.mapper.PostUpdateMapper;
 import com.giveitup.giveitup_be.repository.*;
 import com.giveitup.giveitup_be.specification.PostSpecification;
 import lombok.AccessLevel;
@@ -44,6 +47,7 @@ public class PostService {
     UserRepository userRepository;
     PostViewService postViewService;
     LikeRepository likeRepository;
+    PostUpdateMapper postUpdateMapper;
     DonateRepository donateRepository;
     ImageRepository imageRepository;
     @PreAuthorize("hasRole('AUTHOR')")
@@ -52,7 +56,7 @@ public class PostService {
         PostEntity postEntity = postMapper.toPost(request);
         try {
             // B2. Lưu post trước (để có ID)
-            UserEntity userEntity = userRepository.findById(String.valueOf(request.getUser())).orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_EXISTED));
+            UserEntity userEntity = userRepository.findById(request.getUser()).orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_EXISTED));
 
             CategoryEntity categoryEntity = categoryRepository.findById(request.getCategory())
                     .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_EXISTED));
@@ -247,8 +251,43 @@ public class PostService {
 
         Page<PostEntity> page = postRepository.findAll(spec, pageable);
         log.info("Found {} users", page.getTotalElements());
-        return page.map(postMapper::toPostResponse);
+        return page.map(post -> {
+            PostResponse response = postMapper.toPostResponse(post);
+            response.setPayouts(mapPayouts(post));  // map tay
+            return response;
+        });
+
     }
+    private List<PayoutResponse> mapPayouts(PostEntity post) {
+        if (post.getPayouts() == null) return List.of();
+
+        return post.getPayouts().stream().map(p -> {
+            PayoutResponse res = new PayoutResponse();
+            res.setId(p.getId());
+            res.setAmount(p.getAmount());
+            res.setAdminTransferAmount(p.getAdminTransferAmount());
+            res.setNote(p.getNote());
+            res.setCreatedByAdminAt(p.getCreatedByAdminAt());
+            res.setConfirmedAt(p.getConfirmedAt());
+            res.setPostId(p.getId());
+            res.setNoteAdmin(p.getNoteAdmin());
+            res.setTransferProofImageUrl(p.getTransferProofImageUrl());
+            res.setTransferProofImagePublicId(p.getTransferProofImagePublicId());
+            res.setRequestedAt(p.getRequestedAt());
+            res.setStatus(p.getStatus());
+            res.setStatusName(PayoutStatus.fromCode(p.getStatus()).getLabel());
+            res.setType(p.getType());
+            if (p.getRequestedBy() != null) {
+                res.setRequestedBy(p.getRequestedBy().getId());
+            }
+            if(p.getCreatedByAdmin() != null) {
+                res.setCreatedByAdmin(p.getCreatedByAdmin().getId());
+            }
+            res.setPostUpdate(postUpdateMapper.toPostUpdateResponse(p.getPostUpdate()));
+            return res;
+        }).toList();
+    }
+
     public Page<PostResponse> getPosts(SearchListPostRequest request) {
         Specification<PostEntity> spec = Specification.allOf(
                         PostSpecification.hasUserId(request.getUserId())
@@ -281,6 +320,7 @@ public class PostService {
         postViewService.addView(user.getId(), post);
         PostResponse res = postMapper.toPostResponse(post);
         res.setLiked(liked);
+        res.setPayouts(mapPayouts(post));
         return res;
     }
 

@@ -6,7 +6,6 @@ import com.giveitup.giveitup_be.dto.request.DonateRequest;
 import com.giveitup.giveitup_be.dto.request.SearchListDonateRequest;
 import com.giveitup.giveitup_be.dto.response.DonateResponse;
 import com.giveitup.giveitup_be.dto.response.DonateSummary;
-import com.giveitup.giveitup_be.dto.response.PostResponse;
 import com.giveitup.giveitup_be.service.DonateService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;

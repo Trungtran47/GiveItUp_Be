@@ -32,7 +32,7 @@ public class CommentService {
 
     @Transactional
     public CommentResponse createComment(Long userId, CommentRequest request) {
-        UserEntity user = userRepository.findById(String.valueOf(userId))
+        UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
         PostEntity post = postRepository.findById(request.getPostId())
                 .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_EXISTED));

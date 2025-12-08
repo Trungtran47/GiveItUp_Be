@@ -17,7 +17,7 @@ public class DonateResponse {
 //    boolean isShow;
     String description;
     LocalDateTime donatedAt;
-    UserPostResponse user;
+    UserResponse user;
     PostResponse post;
 
 }

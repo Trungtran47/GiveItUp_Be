@@ -53,6 +53,9 @@ public class PostEntity {
     String video;
     String publicVideoId;
 
+    // Địa chỉ
+    @Column(columnDefinition = "NVARCHAR(MAX)")
+    String address;
 
     // Trạng thái bài đăng (VD: ACTIVE, CLOSED, PENDING)
     Long status;

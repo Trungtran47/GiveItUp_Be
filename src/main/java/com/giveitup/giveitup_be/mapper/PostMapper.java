@@ -7,7 +7,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 
-@Mapper(componentModel = "spring", uses = {PayoutMapper.class})
+@Mapper(componentModel = "spring", uses = {PayoutMapper.class,RoleMapper.class})
 public interface PostMapper {
     @Mapping(target = "category", ignore = true)
     @Mapping(target = "images", ignore = true)
@@ -16,7 +16,7 @@ public interface PostMapper {
     @Mapping(target = "user", ignore = true)
     @Mapping(target = "payouts", ignore = true)
     PostEntity toPost(PostRequest request);
-    @Mapping(target = "payouts", ignore = true)
+//    @Mapping(target = "payouts", ignore = true)
     @Mapping(target = "liked", ignore = true)
     PostResponse toPostResponse(PostEntity response);
 

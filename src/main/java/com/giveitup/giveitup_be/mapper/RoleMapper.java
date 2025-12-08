@@ -9,6 +9,9 @@ import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
 public interface RoleMapper {
+    default String map(RoleEntity value) {
+        return value != null ? value.getName() : null;
+    }
     @Mapping(target = "permissions", ignore = true)
     RoleEntity toRole(RoleRequest request);
 

@@ -6,7 +6,7 @@ import com.giveitup.giveitup_be.entity.DonateEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring", uses = {UserMapper.class, PostMapper.class, PayoutMapper.class})
+@Mapper(componentModel = "spring", uses = {UserMapper.class, PostMapper.class, PayoutMapper.class,RoleMapper.class})
 public interface DonateMapper {
 
     @Mapping(target = "post.payouts", ignore = true)

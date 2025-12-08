@@ -15,7 +15,7 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 @Mapper(
         componentModel = "spring",
         nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE
-)
+        , uses = {UserMapper.class, RoleMapper.class})
 public interface UserMapper {
     @Mapping(source = "role", target = "role.name")
     UserEntity toUser(UserCreationRequest request);

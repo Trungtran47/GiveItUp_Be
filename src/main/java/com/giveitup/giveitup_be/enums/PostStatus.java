@@ -1,10 +1,11 @@
 package com.giveitup.giveitup_be.enums;
 
 public enum PostStatus {
-    PENDING(10L, "Chờ duyệt"),      // chờ duyệt
+//    PENDING(10L, "Chờ duyệt"),      // chờ duyệt
     ACTIVE(20L, "Đang hoạt động"),  // đang hoạt động
-    INACTIVE(30L, "Tạm dừng"),      // tạm dừng hoặc ẩn
-    REJECTED(90L, "Không được duyệt"); // từ chối
+    INACTIVE(30L, "Hết hạn"),      // tạm dừng hoặc ẩn
+    COMPlETE(50L, "Hoàng thành"),
+    REJECTED(90L, "Không được duyệt"); // từ chối, ẩn
 
     private final Long code;
     private final String label; // thêm label

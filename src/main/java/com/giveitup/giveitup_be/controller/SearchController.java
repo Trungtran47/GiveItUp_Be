@@ -1,12 +1,16 @@
 package com.giveitup.giveitup_be.controller;
 
+import com.giveitup.giveitup_be.dto.paging.BasePagingRequest;
+import com.giveitup.giveitup_be.dto.paging.PagingResponse;
 import com.giveitup.giveitup_be.dto.request.ApiResponse;
+import com.giveitup.giveitup_be.dto.response.PostResponse;
 import com.giveitup.giveitup_be.dto.response.SearchResponse;
 import com.giveitup.giveitup_be.service.SearchService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,9 +26,22 @@ public class SearchController {
       SearchService searchService;
 
     @GetMapping
-    public ApiResponse<SearchResponse> search(@RequestParam String keyword) {
-        return ApiResponse.<SearchResponse>builder()
-                .result(searchService.search(keyword))
+    public ApiResponse<PagingResponse<PostResponse>> search(@RequestParam(required = false) String keyword,@ModelAttribute BasePagingRequest request) {
+        Page<PostResponse> page = searchService.search(keyword, request);
+
+        PagingResponse.PagingInfo paging = PagingResponse.PagingInfo.builder()
+                .CurrentPage(request.getCurrentPage())
+                .NumberOfRecord(request.getPageSize())
+                .TotalRecord(page.getTotalElements())
+                .TotalPages(page.getTotalPages())
+                .build();
+
+        PagingResponse<PostResponse> pagingResponse = PagingResponse.<PostResponse>builder()
+                .Paging(paging)
+                .Data(page.getContent())
+                .build();
+        return ApiResponse.<PagingResponse<PostResponse>>builder()
+                .result(pagingResponse)
                 .build();
     }
     @GetMapping("/history")

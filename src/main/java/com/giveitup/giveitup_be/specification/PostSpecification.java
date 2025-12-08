@@ -1,9 +1,9 @@
 package com.giveitup.giveitup_be.specification;
 
-import com.giveitup.giveitup_be.entity.CategoryEntity;
 import com.giveitup.giveitup_be.entity.LikeEntity;
 import com.giveitup.giveitup_be.entity.PostEntity;
 import com.giveitup.giveitup_be.entity.UserEntity;
+import com.giveitup.giveitup_be.enums.PostStatus;
 import jakarta.persistence.criteria.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.util.StringUtils;
@@ -40,6 +40,12 @@ public class PostSpecification {
             return cb.equal(root.get("user").get("id"), userId);
         };
     }
+    public static Specification<PostEntity> hasStatus(Long status) {
+        return (root, query, cb) -> {
+            if (status == null) return null;
+            return cb.equal(root.get("status"), status);
+        };
+    }
 
     public static Specification<PostEntity> hasTitle(String title) {
         return (root, query, cb) -> {
@@ -49,43 +55,50 @@ public class PostSpecification {
             return cb.like(cb.lower(root.get("title")), "%" + title.toLowerCase() + "%");
         };
     }
-    public static Specification<PostEntity> hasCreatedAt(LocalDateTime date) {
+    public static Specification<PostEntity> hasEndDate(LocalDate endDate) {
+        if (endDate == null) return null;
+        LocalDateTime start = endDate.atStartOfDay();
+        LocalDateTime end = endDate.plusDays(1).atStartOfDay();
+        return (root, query, cb) -> cb.between(root.get("endDate"), start, end);
+    }
+    public static Specification<PostEntity> hasCreatedAt(LocalDate date) {
         if (date == null) {
-            return null; // hoặc return (root, query, cb) -> cb.conjunction();
+            return null;
         }
         return (root, query, cb) -> cb.equal(
-                cb.function("DATE", Date.class, root.get("createdAt")),
-                java.sql.Date.valueOf(String.valueOf(date))
+                cb.function("CONVERT", Date.class, cb.literal("DATE"), root.get("createdAt")),
+                java.sql.Date.valueOf(date)
         );
     }
-    public static Specification<PostEntity> hasEndDate(LocalDateTime endDate) {
-        if (endDate == null) {
-            return null; // hoặc return (root, query, cb) -> cb.conjunction();
-        }
-        return (root, query, cb) -> cb.equal(
-                cb.function("DATE", Date.class, root.get("endDate")),
-                java.sql.Date.valueOf(String.valueOf(endDate))
-        );
-    }
-    public static Specification<PostEntity> sortAmounts(Boolean sortTargetAmount, Boolean sortDonatedAmount) {
+    public static Specification<PostEntity> sortAmounts(Integer typeSort) {
         return (root, query, cb) -> {
+            if (typeSort == null) {
+                return cb.conjunction();
+            }
             List<Order> orders = new ArrayList<>();
-
-            if (sortTargetAmount != null) {
-                orders.add(sortTargetAmount ? cb.desc(root.get("targetAmount")) : cb.asc(root.get("targetAmount")));
+            switch (typeSort) {
+                case 1:
+                    orders.add(cb.asc(root.get("targetAmount")));
+                    break;
+                case 2:
+                    orders.add(cb.desc(root.get("targetAmount")));
+                    break;
+                case 3:
+                    orders.add(cb.asc(root.get("donatedAmount")));
+                    break;
+                case 4:
+                    orders.add(cb.desc(root.get("donatedAmount")));
+                    break;
+                default:
+                    break; // không sort
             }
-
-            if (sortDonatedAmount != null) {
-                orders.add(sortDonatedAmount ? cb.desc(root.get("donatedAmount")) : cb.asc(root.get("donatedAmount")));
-            }
-
             if (!orders.isEmpty()) {
                 query.orderBy(orders);
             }
-
             return cb.conjunction();
         };
     }
+
 
     public static Specification<PostEntity> randomOrder(Boolean isRandom) {
         return (root, query, cb) -> {
@@ -101,6 +114,40 @@ public class PostSpecification {
         };
     }
 
+    public static Specification<PostEntity> containsKeyword(String keyword) {
+        return (root, query, cb) -> {
+
+            // ---- 1. Predicate bắt buộc: chỉ lấy bài có status = 20 ----
+            Predicate statusPredicate = cb.equal(root.get("status"), PostStatus.ACTIVE.getCode());
+
+            // ---- 2. Nếu không có keyword → chỉ lọc theo status ----
+            if (keyword == null || keyword.trim().isEmpty()) {
+                return statusPredicate;
+            }
+
+            String like = "%" + keyword.toLowerCase() + "%";
+
+            // Tên, địa chỉ
+            Predicate titlePredicate = cb.like(cb.lower(root.get("title")), like);
+            Predicate addressPredicate = cb.like(cb.lower(root.get("address")), like);
+
+            // JOIN User để tìm theo tên tổ chức
+            Join<PostEntity, UserEntity> userJoin = root.join("user", JoinType.LEFT);
+            Predicate organizationPredicate =
+                    cb.like(cb.lower(userJoin.get("organizationName")), like);
+
+            // ---- 3. Kết hợp: (title OR address OR organization) AND status = 20 ----
+            Predicate keywordPredicates = cb.or(
+                    titlePredicate,
+                    addressPredicate,
+                    organizationPredicate
+            );
+
+            return cb.and(keywordPredicates, statusPredicate);
+        };
+    }
 
 
 }
+
+

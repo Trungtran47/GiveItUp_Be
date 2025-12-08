@@ -169,7 +169,8 @@ public UserResponse registerAuthor(Long userId, AuthorCreationRequest request) {
     public Page<UserResponse> getUsers(SearchListUserRequest request) {
         Specification<UserEntity> spec = Specification.allOf(
                 UserSpecification.hasUsername(request.getUserName()),
-                UserSpecification.hasPhoneNumber(request.getPhoneNumber())
+                UserSpecification.hasPhoneNumber(request.getPhoneNumber()),
+                (root, query, cb) -> cb.notEqual(root.get("role").get("name"), "ADMIN")
         );
         int pageIndex = Math.max(request.getCurrentPage() - 1, 0);
         Pageable pageable = PageRequest.of(

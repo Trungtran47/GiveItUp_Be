@@ -20,9 +20,9 @@ public class UserResponse {
     String firstName;
     String lastName;
     LocalDate dob;
-    String gender;
+    Long gender;
     String email;
-    Long phoneNumber;
+    String phoneNumber;
     String role;
     String address;
     String imageUser;

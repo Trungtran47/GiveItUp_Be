@@ -14,6 +14,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/donate")
 @RequiredArgsConstructor
@@ -61,6 +63,13 @@ public class DonateController {
                 .build();
         return ApiResponse.<PagingResponse<DonateSummary>>builder()
                 .result(pagingResponse)
+                .build();
+    }
+    @GetMapping("/by_post/{postId}")
+    ApiResponse<List<DonateResponse>> getDonateByPostId(@PathVariable Long postId,  @RequestParam(required = false, defaultValue = "") String keyword) {
+        List<DonateResponse> list = donateService.getDonateByPostId(postId,keyword);
+        return ApiResponse.<List<DonateResponse>>builder()
+                .result(list)
                 .build();
     }
 }

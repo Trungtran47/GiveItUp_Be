@@ -14,36 +14,44 @@ public class DonateSummary {
     private Long id;
     private Double amount;
     private LocalDateTime latestDonatedAt; // mới thêm
-    private UserPostResponse user;
+    private UserResponse user;
 
-    public DonateSummary(Long id,Double amount, LocalDateTime latestDonatedAt, UserEntity userEntity) {
+    public DonateSummary(Long id, Double amount, LocalDateTime latestDonatedAt, UserEntity userEntity) {
         this.id = id;
         this.amount = amount;
         this.latestDonatedAt = latestDonatedAt;
-        this.user = new UserPostResponse(
-                userEntity.getId(),
-                userEntity.getUsername(),
-                userEntity.getFirstName(),
-                userEntity.getLastName(),
-                userEntity.getDob(),
-                userEntity.getGender(),
-                userEntity.getEmail(),
-                userEntity.getPhoneNumber(),
-                userEntity.getStatus(),
-                userEntity.getOrganizationLogo(),
-                userEntity.getOrganizationLogoPublicId(),
-                userEntity.getOrganizationName(),
-                null, // CategoryResponse mapping nếu cần
-                userEntity.getEstablishmentDate(),
-                userEntity.getOrganizationAddress(),
-                userEntity.getOrganizationEmail(),
-                userEntity.getRegistrationCode(),
-                userEntity.getOrganizationPhone(),
-                userEntity.getVerificationFile(),
-                userEntity.getVerificationInfoPublicId(),
-                userEntity.getLinkInfoOrganization(),
-                userEntity.getOrganizationDescription(),
-                userEntity.getOrganizationCreatedAt()
+
+        this.user = new UserResponse(
+                userEntity.getId(),                        // id
+                userEntity.getUsername(),                 // username
+                userEntity.getFirstName(),                // firstName
+                userEntity.getLastName(),                 // lastName
+                userEntity.getDob(),                      // dob
+                userEntity.getGender(),                   // gender
+                userEntity.getEmail(),                    // email
+                userEntity.getPhoneNumber(),              // phoneNumber
+                userEntity.getRole().getName(),           // role
+                userEntity.getAddress(),                  // address
+                userEntity.getImageUser(),                // imageUser
+                userEntity.getPublicImageUserId(),        // publicImageUserId
+                userEntity.getCreatedAt(),                // createdAt
+                userEntity.getUpdatedAt(),                // updatedAt
+                userEntity.getStatus(),                   // status
+                userEntity.getOrganizationLogo(),         // organizationLogo
+                userEntity.getOrganizationLogoPublicId(), // organizationLogoPublicId
+                userEntity.getOrganizationName(),         // organizationName
+                null,                                     // category (hoặc map nếu cần)
+                userEntity.getEstablishmentDate(),        // establishmentDate
+                userEntity.getOrganizationAddress(),      // organizationAddress
+                userEntity.getOrganizationEmail(),        // organizationEmail
+                userEntity.getRegistrationCode(),         // registrationCode
+                userEntity.getOrganizationPhone(),        // organizationPhone
+                userEntity.getVerificationFile(),         // verificationFile
+                userEntity.getVerificationInfoPublicId(), // verificationInfoPublicId
+                userEntity.getLinkInfoOrganization(),     // linkInfoOrganization
+                userEntity.getOrganizationDescription(),  // organizationDescription
+                userEntity.getOrganizationCreatedAt()     // organizationCreatedAt
         );
     }
+
 }

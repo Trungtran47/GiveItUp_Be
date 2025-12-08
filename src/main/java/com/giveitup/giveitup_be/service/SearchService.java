@@ -1,21 +1,28 @@
 package com.giveitup.giveitup_be.service;
 
+import com.giveitup.giveitup_be.dto.paging.BasePagingRequest;
+import com.giveitup.giveitup_be.dto.response.PostResponse;
 import com.giveitup.giveitup_be.dto.response.SearchResponse;
 import com.giveitup.giveitup_be.entity.PostEntity;
 import com.giveitup.giveitup_be.entity.SearchHistoryEntity;
 import com.giveitup.giveitup_be.entity.UserEntity;
+import com.giveitup.giveitup_be.mapper.PostMapper;
 import com.giveitup.giveitup_be.repository.PostRepository;
 import com.giveitup.giveitup_be.repository.SearchHistoryRepository;
 import com.giveitup.giveitup_be.repository.UserRepository;
+import com.giveitup.giveitup_be.specification.PostSpecification;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -27,8 +34,13 @@ public class SearchService {
       UserRepository userRepository;
       SearchHistoryRepository searchHistoryRepository;
       UserService userService; // Lấy user đang login
+      PostMapper postMapper;
 
-    public SearchResponse search(String keyword) {
+    public Page<PostResponse> search(String keyword, BasePagingRequest request) {
+        // Nếu không có keyword → trả về trang rỗng
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return Page.empty();
+        }
         // 1. Lưu lịch sử
         UserEntity currentUser = userService.getMyInfoReturnEntity();
         searchHistoryRepository.save(
@@ -38,28 +50,21 @@ public class SearchService {
                         .type("mix")
                         .build()
         );
-
-        // 2. Tìm post
-        List<SearchResponse.PostSearchResponse> posts =
-                postRepository.findByTitleContainingIgnoreCase(keyword)
-                        .stream()
-                        .map(this::toPostDTO)
-                        .toList();
-
-        // 3. Tìm user (author status = 30)
-        List<SearchResponse.UserSearchResponse> users =
-                userRepository.searchAuthors(keyword)
-                        .stream()
-                        .map(this::toUserDTO)
-                        .toList();
-
-        // 4. Trả kết quả
-        SearchResponse res = new SearchResponse();
-        res.setPosts(posts);
-        res.setUsers(users);
-
-        return res;
+        // 2. Tạo Pageable
+        int pageIndex = Math.max(request.getCurrentPage() - 1, 0);
+        Pageable pageable = PageRequest.of(pageIndex, request.getPageSize());
+        // 3. Tạo Specification không deprecated
+        Specification<PostEntity> spec = Specification.allOf(
+                PostSpecification.containsKeyword(keyword)
+        );
+        // 4. Query phân trang
+        Page<PostEntity> posts = postRepository.findAll(spec, pageable);
+        // 5. Map sang Page<PostResponse>
+        return posts.map(postMapper::toPostResponse);
     }
+
+
+
     public List<SearchResponse.HistoryResponse> getSearchHistory() {
         UserEntity currentUser = userService.getMyInfoReturnEntity();
         return searchHistoryRepository
@@ -83,6 +88,7 @@ public class SearchService {
         }
         searchHistoryRepository.delete(history);
     }
+    @Transactional
     public void deleteAllSearchHistory() {
         UserEntity currentUser = userService.getMyInfoReturnEntity();
         searchHistoryRepository.deleteAllByUserId(currentUser.getId());

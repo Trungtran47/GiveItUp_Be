@@ -78,6 +78,25 @@ public class PostController {
                 .result(pagingResponse)
                 .build();
     }
+    @GetMapping("/admin")
+    ApiResponse<PagingResponse<PostResponse>> getPostsAdmin(@ModelAttribute SearchListPostRequest request) {
+        Page<PostResponse> page = postService.getPostsAdmin(request);
+
+        PagingResponse.PagingInfo paging = PagingResponse.PagingInfo.builder()
+                .CurrentPage(request.getCurrentPage())
+                .NumberOfRecord(request.getPageSize())
+                .TotalRecord(page.getTotalElements())
+                .TotalPages(page.getTotalPages())
+                .build();
+
+        PagingResponse<PostResponse> pagingResponse = PagingResponse.<PostResponse>builder()
+                .Paging(paging)
+                .Data(page.getContent())
+                .build();
+        return ApiResponse.<PagingResponse<PostResponse>>builder()
+                .result(pagingResponse)
+                .build();
+    }
     @GetMapping("/categoryId/{categoryId}")
     ApiResponse<PagingResponse<PostResponse>> getPostsByCategoryId(@PathVariable Long categoryId,@ModelAttribute SearchListPostRequest request) {
         Page<PostResponse> page = postService.getPostsByCategory(categoryId, request);

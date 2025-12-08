@@ -7,6 +7,7 @@ import com.giveitup.giveitup_be.dto.response.DonateSummary;
 import com.giveitup.giveitup_be.entity.DonateEntity;
 import com.giveitup.giveitup_be.entity.PostEntity;
 import com.giveitup.giveitup_be.entity.UserEntity;
+import com.giveitup.giveitup_be.enums.PostStatus;
 import com.giveitup.giveitup_be.exception.AppException;
 import com.giveitup.giveitup_be.exception.ErrorCode;
 import com.giveitup.giveitup_be.mapper.DonateMapper;
@@ -24,6 +25,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -47,6 +50,10 @@ public class DonateService {
         DonateEntity savedDonate = donateRepository.save(donateEntity);
         // Tính tổng donate của bài post
         Double totalAmount = donateRepository.sumAmountByPostId(postEntity.getId());
+        if (totalAmount >= postEntity.getTargetAmount()){
+            postEntity.setStatus(PostStatus.COMPlETE.getCode());
+            postEntity.setStatusName(PostStatus.COMPlETE.getLabel());
+        }
         postEntity.setDonatedAmount(totalAmount);
         postRepository.save(postEntity);
         return donateMapper.toDonateResponse(savedDonate);
@@ -65,6 +72,23 @@ public class DonateService {
             return page.map(donateMapper::toDonateResponse);
 //        }
     }
+    public List<DonateResponse> getDonateByPostId(Long postId, String keyword) {
+        Specification<DonateEntity> spec = Specification.allOf(
+                DonateSpecification.hasPostId(postId),
+                DonateSpecification.hasKeyword(keyword)
+        );
+        // Lấy toàn bộ danh sách donate theo postId + keyword
+        List<DonateEntity> donations = donateRepository.findAll(
+                spec,
+                Sort.by("donatedAt").descending()
+        );
+
+        // Convert sang response
+        return donations.stream()
+                .map(donateMapper::toDonateResponse)
+                .toList();
+    }
+
     public Page<DonateSummary> getDonateTotalAmount(Long postId, SearchListDonateRequest request) {
         int pageIndex = Math.max(request.getCurrentPage() - 1, 0);
         Pageable pageable = PageRequest.of(

@@ -14,7 +14,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface PostRepository extends JpaRepository<PostEntity, Long>, JpaSpecificationExecutor<PostEntity> {
-    List<PostEntity> findAllByEndDateBeforeAndStatusNot(LocalDateTime endDate, Long status);
+    List<PostEntity> findAllByEndDateBeforeAndStatus(LocalDateTime endDate, Long status);
+
     @Query("""
     SELECT p, l.createdAt 
     FROM PostEntity p
@@ -27,7 +28,7 @@ public interface PostRepository extends JpaRepository<PostEntity, Long>, JpaSpec
             Pageable pageable
     );
     @Query("""
-    SELECT p, pv.updatedAt 
+    SELECT p, pv.updatedAt
     FROM PostEntity p
     JOIN p.postViews pv
     WHERE pv.user = :user
@@ -38,5 +39,5 @@ public interface PostRepository extends JpaRepository<PostEntity, Long>, JpaSpec
             Pageable pageable
     );
 
-    List<PostEntity> findByTitleContainingIgnoreCase(String keyword);
+//    List<PostEntity> findByTitleContainingIgnoreCaseOrAddressContainingIgnoreCase(String titleKeyword, String addressKeyword);
 }

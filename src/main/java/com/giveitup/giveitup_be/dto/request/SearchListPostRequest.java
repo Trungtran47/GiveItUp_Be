@@ -19,11 +19,10 @@ import java.time.LocalDateTime;
 public class SearchListPostRequest extends BasePagingRequest {
     Long userId;
     String postTitle;
-    String status;
+    Long status;
     Long categoryId;
     boolean random;
-    boolean sortTargetAmount;
-    boolean sortDonatedAmount;
-    LocalDateTime endDate;
-    LocalDateTime createdAt;
+    Integer typeSort;
+    LocalDate endDate;
+    LocalDate createdAt;
 }

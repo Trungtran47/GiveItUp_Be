@@ -69,7 +69,7 @@ public class PostService {
             postEntity.setDonatedAmount(0.0);
             postEntity.setStatus(PostStatus.ACTIVE.getCode());
             postEntity.setEndDate(request.getEndDate());
-            postEntity.setStatusName(PostStatus.PENDING.getLabel());
+            postEntity.setStatusName(PostStatus.ACTIVE.getLabel());
             postEntity = postRepository.save(postEntity);
             // B3. Nếu có file ảnh thì upload
             if (request.getVideo() != null && !request.getVideo().isEmpty()) {
@@ -121,11 +121,16 @@ public class PostService {
         postEntity.setTitle(request.getTitle());
         postEntity.setDescription(request.getDescription());
         postEntity.setTargetAmount(request.getTargetAmount());
+        postEntity.setAddress(request.getAddress());
         postEntity.setEndDate(request.getEndDate());
         postEntity.setCategory(categoryRepository.findById(request.getCategory())
                 .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_EXISTED)));
         postEntity.setBankAccount(bankAccountRepository.findById(request.getBankAccount())
                 .orElseThrow(() -> new AppException(ErrorCode.BANK_ACCOUNT_NOT_EXISTED)));
+        if (request.getEndDate().isAfter(LocalDateTime.now())) {
+            postEntity.setStatus(PostStatus.ACTIVE.getCode());
+            postEntity.setStatusName(PostStatus.ACTIVE.getLabel());
+        }
 
         // ==== B2. XỬ LÝ VIDEO ====
         MultipartFile newVideoFile = request.getVideo();
@@ -290,19 +295,38 @@ public class PostService {
 
     public Page<PostResponse> getPosts(SearchListPostRequest request) {
         Specification<PostEntity> spec = Specification.allOf(
-                        PostSpecification.hasUserId(request.getUserId())
-                ).and(PostSpecification.hasTitle(request.getPostTitle()))
+                        PostSpecification.hasUserId(request.getUserId()))
+                .and(PostSpecification.hasTitle(request.getPostTitle()))
                 .and(PostSpecification.hasCategory(request.getCategoryId()))
                 .and(PostSpecification.hasCreatedAt(request.getCreatedAt()))
                 .and(PostSpecification.hasEndDate(request.getEndDate()))
-                .and(PostSpecification.sortAmounts(request.isSortTargetAmount(), request.isSortDonatedAmount()))
-                .and(PostSpecification.randomOrder(request.isRandom()));;
-
+                .and(PostSpecification.hasStatus(PostStatus.ACTIVE.getCode()))
+                .and(PostSpecification.sortAmounts(request.getTypeSort()))
+                .and(PostSpecification.randomOrder(request.isRandom()));
         int pageIndex = Math.max(request.getCurrentPage() - 1, 0);
         Pageable pageable = PageRequest.of(
                 pageIndex,
                 request.getPageSize()
-//                Sort.by("title").ascending()
+        );
+
+        Page<PostEntity> page = postRepository.findAll(spec, pageable);
+        return page.map(postMapper::toPostResponse);
+    }
+    @PreAuthorize("hasRole('ADMIN')")
+    public Page<PostResponse> getPostsAdmin(SearchListPostRequest request) {
+        Specification<PostEntity> spec = Specification.allOf(
+                        PostSpecification.hasUserId(request.getUserId()))
+                .and(PostSpecification.hasTitle(request.getPostTitle()))
+                .and(PostSpecification.hasCategory(request.getCategoryId()))
+                .and(PostSpecification.hasCreatedAt(request.getCreatedAt()))
+                .and(PostSpecification.hasEndDate(request.getEndDate()))
+                .and(PostSpecification.hasStatus(request.getStatus())
+                .and(PostSpecification.sortAmounts(request.getTypeSort()))
+                .and(PostSpecification.randomOrder(request.isRandom())));
+        int pageIndex = Math.max(request.getCurrentPage() - 1, 0);
+        Pageable pageable = PageRequest.of(
+                pageIndex,
+                request.getPageSize()
         );
 
         Page<PostEntity> page = postRepository.findAll(spec, pageable);
@@ -343,17 +367,15 @@ public class PostService {
     // Chạy lúc 00:00 hằng ngày
     @Scheduled(cron = "0 0 0 * * *")
     public void updateExpiredStatus() {
-
         LocalDateTime today = LocalDate.now().atStartOfDay();
-
         // Lấy tất cả record có endDate < hôm nay và status != 30
         List<PostEntity> expiredList =
-                postRepository.findAllByEndDateBeforeAndStatusNot(today, 30L);
-
-        expiredList.forEach(item -> item.setStatus(30L));
-
+                postRepository.findAllByEndDateBeforeAndStatus(today, PostStatus.ACTIVE.getCode());
+        expiredList.forEach(item -> {
+            item.setStatus(PostStatus.INACTIVE.getCode());
+            item.setStatusName(PostStatus.INACTIVE.getLabel());
+        });
         postRepository.saveAll(expiredList);
-
         System.out.println("[CRON] Updated " + expiredList.size() + " items at 00:00");
     }
 }

@@ -28,8 +28,9 @@ public class PostResponse {
     Long status;
     String statusName;
     BankAccountResponse bankAccount;
-    UserPostResponse user;
+    UserResponse user;
     CategoryResponse category;
+    String address;
     // Thời gian tạo & cập nhật
     LocalDateTime createdAt;
     LocalDateTime updatedAt;

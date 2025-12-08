@@ -23,6 +23,7 @@ public class PostRequest {
         String title;
         String description;
         Double targetAmount;
+        String address;
 //        Double donatedAmount;
         Long category;
 //        LocalDateTime startDate;

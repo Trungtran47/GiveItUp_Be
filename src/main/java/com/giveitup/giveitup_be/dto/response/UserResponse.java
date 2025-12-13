@@ -7,6 +7,7 @@ import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Set;
 
 @Data
@@ -30,7 +31,7 @@ public class UserResponse {
     // Thời gian tạo & cập nhật
     LocalDateTime createdAt;
     LocalDateTime updatedAt;
-    // 🟢 Thông tin cho tổ chức hoặc nhóm từ thiện
+    //  Thông tin cho tổ chức hoặc nhóm từ thiện
     Long status;
     String organizationLogo;
     String organizationLogoPublicId;
@@ -46,4 +47,9 @@ public class UserResponse {
     String linkInfoOrganization;   // link thông tin group/ fb
     String organizationDescription; // mô ta tổ chức
     LocalDateTime organizationCreatedAt; // Ngày nâng cấp tổ chức
+//    List<BankAccountResponse> bankAccounts;
+
+    Long totalFollowers;
+    Long totalFollowing;
+    Boolean isFollowing;
 }

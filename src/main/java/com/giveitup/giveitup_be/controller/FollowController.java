@@ -1,5 +1,7 @@
 package com.giveitup.giveitup_be.controller;
 
+import com.giveitup.giveitup_be.dto.request.ApiResponse;
+import com.giveitup.giveitup_be.dto.response.DonateResponse;
 import com.giveitup.giveitup_be.dto.response.FollowResponse;
 import com.giveitup.giveitup_be.service.FollowService;
 import lombok.RequiredArgsConstructor;
@@ -8,21 +10,23 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/follows")
+@RequestMapping("/follows")
 @RequiredArgsConstructor
 public class FollowController {
 
     private final FollowService followService;
 
-    @PostMapping("/{me}/follow/{target}")
-    public String follow(@PathVariable Long me, @PathVariable Long target) {
-        return followService.follow(me, target);
+    @PostMapping("/{me}/toggle/{target}")
+    public ApiResponse<String> toggleFollow(@PathVariable Long me, @PathVariable Long target) {
+        return ApiResponse.<String>builder()
+                .result(followService.toggleFollow(me, target))
+                .build();
     }
 
-    @DeleteMapping("/{me}/unfollow/{target}")
-    public String unfollow(@PathVariable Long me, @PathVariable Long target) {
-        return followService.unfollow(me, target);
-    }
+//    @DeleteMapping("/{me}/unfollow/{target}")
+//    public String unfollow(@PathVariable Long me, @PathVariable Long target) {
+//        return followService.unfollow(me, target);
+//    }
 
     @GetMapping("/{userId}/following")
     public List<FollowResponse> getFollowing(@PathVariable Long userId) {

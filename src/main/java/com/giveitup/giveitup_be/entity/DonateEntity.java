@@ -42,5 +42,5 @@ public class DonateEntity {
     // Ngày donate
     @CreatedDate
     @Column(nullable = false)
-    LocalDateTime donatedAt;
+    LocalDateTime createdAt;
 }

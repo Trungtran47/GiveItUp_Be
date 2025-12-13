@@ -30,8 +30,8 @@ public class BankAccountEntity {
     String accountCode;           // Mã tài khoản
     @Column(columnDefinition = "NVARCHAR(255)")
     String accountHolderName;   // Chủ tài khoản
+    @Column(columnDefinition = "NVARCHAR(255)")
     String bankName;
-    String phoneNumber;         // Số điện thoại
     Long status;
     // Thời gian tạo & cập nhật
     @CreatedDate

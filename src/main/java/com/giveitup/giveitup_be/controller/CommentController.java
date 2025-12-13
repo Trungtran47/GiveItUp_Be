@@ -3,6 +3,7 @@ package com.giveitup.giveitup_be.controller;
 import com.giveitup.giveitup_be.dto.request.ApiResponse;
 import com.giveitup.giveitup_be.dto.request.CommentRequest;
 import com.giveitup.giveitup_be.dto.request.CommentResponse;
+import com.giveitup.giveitup_be.dto.response.CommentResponseForUser;
 import com.giveitup.giveitup_be.service.CommentService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,12 @@ public class CommentController {
     public ApiResponse<List<CommentResponse>> getCommentsByPost(@PathVariable Long postId) {
         return ApiResponse.<List<CommentResponse> >builder()
                 .result(commentService.getCommentsByPost(postId))
+                .build();
+    }
+    @GetMapping("/get/my_comment")
+    public ApiResponse<List<CommentResponseForUser>> getCommentsByUserId() {
+        return ApiResponse.<List<CommentResponseForUser> >builder()
+                .result(commentService.getCommentsByUserId())
                 .build();
     }
     @DeleteMapping("/{userId}/delete/{commentId}")

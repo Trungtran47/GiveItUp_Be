@@ -13,6 +13,7 @@ import com.giveitup.giveitup_be.exception.AppException;
 import com.giveitup.giveitup_be.exception.ErrorCode;
 import com.giveitup.giveitup_be.mapper.UserMapper;
 import com.giveitup.giveitup_be.repository.CategoryRepository;
+import com.giveitup.giveitup_be.repository.FollowRepository;
 import com.giveitup.giveitup_be.repository.RoleRepository;
 import com.giveitup.giveitup_be.repository.UserRepository;
 import com.giveitup.giveitup_be.specification.UserSpecification;
@@ -47,6 +48,7 @@ public class UserService {
     PasswordEncoder passwordEncoder;
     CloudinaryService cloudinaryService;
     CategoryRepository categoryRepository;
+    FollowRepository  followRepository;
 //
 public UserResponse registerAuthor(Long userId, AuthorCreationRequest request) {
     UserEntity userEntity = userRepository.findById(userId)
@@ -186,9 +188,18 @@ public UserResponse registerAuthor(Long userId, AuthorCreationRequest request) {
 
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+//    @PreAuthorize("hasRole('ADMIN')")
     public UserResponse getUser(Long id) {
-        return userMapper.toUserResponse(
-                userRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED)));
+        UserEntity user = userRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        Long totalFollowers = followRepository.countByFollowing(user);
+        Long totalFollowing = followRepository.countByFollower(user);
+        UserResponse response = userMapper.toUserResponse(user);
+        response.setTotalFollowers(totalFollowers);
+        response.setTotalFollowing(totalFollowing);
+        boolean isFollowing = followRepository.existsByFollowerIdAndFollowingId(getMyInfoReturnEntity().getId(), id);
+        response.setIsFollowing(isFollowing);
+        return response;
     }
 }

@@ -21,7 +21,6 @@ public class BankAccountResponse {
     String accountCode;
     String accountHolderName;
     String bankName;
-    String phoneNumber;
     LocalDateTime createdAt;
     LocalDateTime updatedAt;
     Long status;

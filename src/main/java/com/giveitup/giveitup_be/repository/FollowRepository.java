@@ -16,4 +16,9 @@ public interface FollowRepository extends JpaRepository<FollowEntity, Long> {
     List<FollowEntity> findAllByFollower(UserEntity follower); // danh sách mình đang follow
 
     List<FollowEntity> findAllByFollowing(UserEntity following); // danh sách đang follow mình
+    Long countByFollowing(UserEntity user); // user được follow → follower
+
+    Long countByFollower(UserEntity user);
+    boolean existsByFollowerIdAndFollowingId(Long followerId, Long followingId);
+
 }

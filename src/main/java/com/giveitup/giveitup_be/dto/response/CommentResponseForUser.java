@@ -4,20 +4,14 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class DonateResponse {
+public class CommentResponseForUser {
     Long id;
-    Long paymentCode;
-    Double amount;
-//    boolean isShow;
-    String description;
-    LocalDateTime createdAt;
-    UserResponse user;
+    String content;
     PostResponse post;
-
+    LocalDateTime createdAt;
 }

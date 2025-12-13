@@ -237,13 +237,19 @@ public class PostService {
         if (postEntity.getPublicVideoId() != null) {
             cloudinaryService.deleteVideo(postEntity.getPublicVideoId());
         }
-        postRepository.deleteById(postEntity.getId());
+        try {
+            postRepository.deleteById(postEntity.getId());
+        } catch (DataIntegrityViolationException ex) {
+            // Trả lỗi về FE
+//            throw new AppException(ErrorCode.POST_HAS_COMMENTS);
+        }
     }
 
     public Page<PostResponse> getPostByUserId(Long userId, SearchListPostRequest request) {
         Specification<PostEntity> spec = Specification.allOf(
                 PostSpecification.hasUserId(userId),
                 PostSpecification.hasTitle(request.getPostTitle()),
+                PostSpecification.hasStatus(request.getStatus()),
                 PostSpecification.hasCreatedAt(request.getCreatedAt())
         );
         int pageIndex = Math.max(request.getCurrentPage() - 1, 0);

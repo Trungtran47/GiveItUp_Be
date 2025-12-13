@@ -52,7 +52,6 @@ public class BankAccountService {
         bankAccountEntity.setAccountCode(request.getAccountCode());
         bankAccountEntity.setAccountHolderName(request.getAccountHolderName());
         bankAccountEntity.setBankName(request.getBankName());
-        bankAccountEntity.setPhoneNumber(request.getPhoneNumber());
         bankAccountEntity = bankAccountRepository.save(bankAccountEntity);
         return bankAccountMapper.toBankAccountResponse(bankAccountEntity);
     }

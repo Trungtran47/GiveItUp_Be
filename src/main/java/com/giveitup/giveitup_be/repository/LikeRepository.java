@@ -1,9 +1,7 @@
 package com.giveitup.giveitup_be.repository;
 
 import com.giveitup.giveitup_be.entity.LikeEntity;
-import com.giveitup.giveitup_be.entity.PostEntity;
 import com.giveitup.giveitup_be.entity.UserEntity;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

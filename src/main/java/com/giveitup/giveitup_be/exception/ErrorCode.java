@@ -29,6 +29,7 @@ public enum ErrorCode {
     PAYOUT_CANNOT_UPDATE(1018, "Payouts can be updated", HttpStatus.BAD_REQUEST),
     PAYOUT_CANNOT_CONFIRM(1019, "Payout must be TRANSFERRED before confirming", HttpStatus.BAD_REQUEST),
     POST_UPDATE_NOT_EXISTED(1020, "PostUpdate not existed", HttpStatus.NOT_FOUND),
+    INVALID_REQUEST(1021, "Invalid request", HttpStatus.BAD_REQUEST),
     ;
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {

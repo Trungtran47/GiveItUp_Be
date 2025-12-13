@@ -66,7 +66,7 @@ public class DonateService {
             Pageable pageable = PageRequest.of(
                     pageIndex,
                     request.getPageSize(),
-                    Sort.by("donatedAt").ascending()
+                    Sort.by("createdAt").ascending()
             );
             Page<DonateEntity> page = donateRepository.findAll(spec, pageable);
             return page.map(donateMapper::toDonateResponse);
@@ -80,7 +80,7 @@ public class DonateService {
         // Lấy toàn bộ danh sách donate theo postId + keyword
         List<DonateEntity> donations = donateRepository.findAll(
                 spec,
-                Sort.by("donatedAt").descending()
+                Sort.by("createdAt").descending()
         );
 
         // Convert sang response

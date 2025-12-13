@@ -50,7 +50,10 @@ public class DonateSummary {
                 userEntity.getVerificationInfoPublicId(), // verificationInfoPublicId
                 userEntity.getLinkInfoOrganization(),     // linkInfoOrganization
                 userEntity.getOrganizationDescription(),  // organizationDescription
-                userEntity.getOrganizationCreatedAt()     // organizationCreatedAt
+                userEntity.getOrganizationCreatedAt(),   // organizationCreatedAt
+                null,
+                null,
+                null
         );
     }
 

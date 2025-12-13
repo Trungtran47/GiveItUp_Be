@@ -21,13 +21,13 @@ public class BankAccountController {
     BankAccountService bankAccountService;
 
     @PostMapping(path = "/create")
-    public ApiResponse<BankAccountResponse> createBA(@ModelAttribute BankAccountRequest request) {
+    public ApiResponse<BankAccountResponse> createBA(@RequestBody  BankAccountRequest request) {
         return ApiResponse.<BankAccountResponse>builder()
                 .result(bankAccountService.createBankAccount(request))
                 .build();
     }
     @PutMapping(path = "/update")
-    public ApiResponse<BankAccountResponse> updateBA(@ModelAttribute BankAccountRequest request) {
+    public ApiResponse<BankAccountResponse> updateBA(@RequestBody  BankAccountRequest request) {
         return ApiResponse.<BankAccountResponse>builder()
                 .result(bankAccountService.updateBankAccount(request))
                 .build();
@@ -42,6 +42,12 @@ public class BankAccountController {
     public ApiResponse<BankAccountResponse> getBA(@PathVariable Long baId) {
         return ApiResponse.<BankAccountResponse>builder()
                 .result(bankAccountService.getBankAccount(baId))
+                .build();
+    }
+    @DeleteMapping("delete/{baId}")
+    public ApiResponse<Void> deleteBA(@PathVariable Long baId) {
+        bankAccountService.deleteBankAccount(baId);
+        return ApiResponse.<Void>builder()
                 .build();
     }
 

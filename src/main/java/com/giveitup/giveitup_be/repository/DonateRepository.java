@@ -18,7 +18,7 @@ public interface DonateRepository extends JpaRepository<DonateEntity, Long>, Jpa
     SELECT new com.giveitup.giveitup_be.dto.response.DonateSummary(
            d.user.id,
            SUM(d.amount),
-           MAX(d.donatedAt),
+           MAX(d.createdAt),
            d.user
     )
     FROM DonateEntity d

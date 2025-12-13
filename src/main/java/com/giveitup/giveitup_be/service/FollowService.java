@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -22,44 +23,30 @@ public class FollowService {
     private final FollowMapper followMapper;
 
     // FOLLOW
-    public String follow(Long followerId, Long followingId) {
+    public String toggleFollow(Long followerId, Long followingId) {
         if (followerId.equals(followingId)) {
             throw new RuntimeException("Không thể tự follow chính mình");
         }
-
         UserEntity follower = userRepository.findById(followerId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
         UserEntity following = userRepository.findById(followingId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-
-        boolean exists = followRepository.existsByFollowerAndFollowing(follower, following);
-        if (exists) {
-            throw new RuntimeException("Đã follow rồi");
+        // Kiểm tra đã follow chưa
+        Optional<FollowEntity> existingFollow =
+                followRepository.findByFollowerAndFollowing(follower, following);
+        // Nếu có rồi → unfollow
+        if (existingFollow.isPresent()) {
+            followRepository.delete(existingFollow.get());
+            return "Unfollow thành công";
         }
-
-        FollowEntity entity = FollowEntity.builder()
+        // Nếu chưa có → follow
+        FollowEntity follow = FollowEntity.builder()
                 .follower(follower)
                 .following(following)
                 .build();
-
-        followRepository.save(entity);
+        followRepository.save(follow);
 
         return "Follow thành công";
-    }
-
-    // UNFOLLOW
-    public String unfollow(Long followerId, Long followingId) {
-        UserEntity follower = userRepository.findById(followerId)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-        UserEntity following = userRepository.findById(followingId)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-
-        FollowEntity follow = followRepository.findByFollowerAndFollowing(follower, following)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-
-        followRepository.delete(follow);
-
-        return "Unfollow thành công";
     }
 
     // LIST FOLLOWING

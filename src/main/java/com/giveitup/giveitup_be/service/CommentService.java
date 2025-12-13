@@ -2,12 +2,14 @@ package com.giveitup.giveitup_be.service;
 
 import com.giveitup.giveitup_be.dto.request.CommentRequest;
 import com.giveitup.giveitup_be.dto.request.CommentResponse;
+import com.giveitup.giveitup_be.dto.response.CommentResponseForUser;
 import com.giveitup.giveitup_be.entity.CommentEntity;
 import com.giveitup.giveitup_be.entity.PostEntity;
 import com.giveitup.giveitup_be.entity.RoleEntity;
 import com.giveitup.giveitup_be.entity.UserEntity;
 import com.giveitup.giveitup_be.exception.AppException;
 import com.giveitup.giveitup_be.exception.ErrorCode;
+import com.giveitup.giveitup_be.mapper.CommentMapper;
 import com.giveitup.giveitup_be.mapper.UserMapper;
 import com.giveitup.giveitup_be.repository.CommentRepository;
 import com.giveitup.giveitup_be.repository.PostRepository;
@@ -27,8 +29,9 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final UserRepository userRepository;
     private final PostRepository postRepository;
-    private final UserMapper userMapper;
+    private final UserService userService;
     private final RoleRepository roleRepository;
+    private final CommentMapper commentMapper;
 
     @Transactional
     public CommentResponse createComment(Long userId, CommentRequest request) {
@@ -58,7 +61,10 @@ public class CommentService {
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
-
+   public List<CommentResponseForUser>  getCommentsByUserId() {
+        List<CommentEntity> entities = commentRepository.findByUserIdOrderByCreatedAtDesc(userService.getMyInfoReturnEntity().getId());
+        return commentMapper.toCommentResponseForUserList(entities);
+   }
     @Transactional
     public void deleteComment(Long userId, Long commentId) {
         CommentEntity comment = commentRepository.findById(commentId)

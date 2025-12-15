@@ -10,6 +10,9 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 public interface DonateRepository extends JpaRepository<DonateEntity, Long>, JpaSpecificationExecutor<DonateEntity> {
 
     @Query("SELECT COALESCE(SUM(d.amount), 0) FROM DonateEntity d WHERE d.post.id = :postId")
@@ -30,5 +33,17 @@ public interface DonateRepository extends JpaRepository<DonateEntity, Long>, Jpa
             @Param("postId") Long postId,
             Pageable pageable
     );
+    @Query("SELECT COALESCE(SUM(d.amount), 0) FROM DonateEntity d WHERE d.createdAt BETWEEN :start AND :end")
+    Double sumAmountBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
+    long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
+
+    // --- SỬA LẠI QUERY NÀY CHO SQL SERVER ---
+    // Thay DATE(created_at) bằng CAST(created_at AS DATE)
+    @Query(value = "SELECT CAST(created_at AS DATE) as date, SUM(amount) as total " +
+            "FROM donations " +
+            "WHERE created_at BETWEEN :start AND :end " +
+            "GROUP BY CAST(created_at AS DATE) " +
+            "ORDER BY CAST(created_at AS DATE)", nativeQuery = true)
+    List<Object[]> getDailyDonationStats(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 }

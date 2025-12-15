@@ -33,7 +33,7 @@ public class PostRequest {
         String publicVideoId;
         Long status;
         Long bankAccount; // 1 bài post có 1 ngân hàng
-        Long user;
+        Long organization;
         // ==========================
         // ⭐ CLASS ẢNH LỒNG BÊN TRONG
         // ==========================

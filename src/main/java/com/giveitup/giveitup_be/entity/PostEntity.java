@@ -66,8 +66,8 @@ public class PostEntity {
     BankAccountEntity bankAccount;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    UserEntity user;
+    @JoinColumn(name = "organization_id")
+    OrganizationEntity organization;
 
     // Thời gian tạo & cập nhật
     @CreatedDate

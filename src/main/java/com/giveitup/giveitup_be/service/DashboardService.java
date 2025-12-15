@@ -33,7 +33,7 @@ public class DashboardService {
         mode = mode.toUpperCase();
 
         UserEntity user = userService.getMyInfoReturnEntity();
-        Long authorId = user.getId();
+        Long authorId = user.getOrganization().getId();
 
         LocalDateTime curStart, curEnd, preStart, preEnd;
         String currentLabel, previousLabel;
@@ -206,4 +206,5 @@ public class DashboardService {
         }
         return new ArrayList<>(map.values());
     }
+
 }

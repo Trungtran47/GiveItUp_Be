@@ -6,16 +6,15 @@ import com.giveitup.giveitup_be.dto.request.UserCreationRequest;
 import com.giveitup.giveitup_be.dto.request.UserUpdateRequest;
 import com.giveitup.giveitup_be.dto.response.UserResponse;
 import com.giveitup.giveitup_be.entity.CategoryEntity;
+import com.giveitup.giveitup_be.entity.OrganizationEntity;
 import com.giveitup.giveitup_be.entity.RoleEntity;
 import com.giveitup.giveitup_be.entity.UserEntity;
 import com.giveitup.giveitup_be.enums.UserStatus;
 import com.giveitup.giveitup_be.exception.AppException;
 import com.giveitup.giveitup_be.exception.ErrorCode;
+import com.giveitup.giveitup_be.mapper.OrganizationMapper;
 import com.giveitup.giveitup_be.mapper.UserMapper;
-import com.giveitup.giveitup_be.repository.CategoryRepository;
-import com.giveitup.giveitup_be.repository.FollowRepository;
-import com.giveitup.giveitup_be.repository.RoleRepository;
-import com.giveitup.giveitup_be.repository.UserRepository;
+import com.giveitup.giveitup_be.repository.*;
 import com.giveitup.giveitup_be.specification.UserSpecification;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +31,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -49,45 +49,52 @@ public class UserService {
     CloudinaryService cloudinaryService;
     CategoryRepository categoryRepository;
     FollowRepository  followRepository;
+    OrganizationMapper organizationMapper;
 //
+@Transactional
 public UserResponse registerAuthor(Long userId, AuthorCreationRequest request) {
     UserEntity userEntity = userRepository.findById(userId)
             .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
     CategoryEntity categoryEntity = categoryRepository.findById(request.getCategory()).orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_EXISTED));
+
+    OrganizationEntity organization = new OrganizationEntity();
+
     if (request.getOrganizationLogo() != null && !request.getOrganizationLogo().isEmpty()) {
-        // Upload file mới
         Map<String, String> uploadResult = cloudinaryService.uploadImage(
                 request.getOrganizationLogo(), "GiveItUp/images");
-        if (userEntity.getOrganizationLogoPublicId() != null) {
-            cloudinaryService.deleteFile(userEntity.getOrganizationLogoPublicId(), true);
+        if (organization.getOrganizationLogoPublicId() != null) {
+            cloudinaryService.deleteFile(organization.getOrganizationLogoPublicId(), true);
         }
-        userEntity.setOrganizationLogo(uploadResult.get("url"));
-        userEntity.setOrganizationLogoPublicId(uploadResult.get("public_id"));
+        organization.setOrganizationLogo(uploadResult.get("url"));
+        organization.setOrganizationLogoPublicId(uploadResult.get("public_id"));
     } else if (request.getOrganizationLogoUrl() != null) {
-        // Nếu gửi URL cũ thì giữ nguyên
-        userEntity.setOrganizationLogo(request.getOrganizationLogoUrl());
+        organization.setOrganizationLogo(request.getOrganizationLogoUrl());
     }
+
     if (request.getVerificationFile() != null && !request.getVerificationFile().isEmpty()) {
         Map<String, String> uploadResult = cloudinaryService.uploadFile(
                 request.getVerificationFile(), "GiveItUp/files");
         // Xóa file cũ nếu đã có
-        if (userEntity.getVerificationInfoPublicId() != null) {
-            cloudinaryService.deleteFile(userEntity.getVerificationInfoPublicId(), false);
+        if (organization.getVerificationInfoPublicId() != null) {
+            cloudinaryService.deleteFile(organization.getVerificationInfoPublicId(), false);
         }
-        userEntity.setVerificationFile(uploadResult.get("url"));
-        userEntity.setVerificationInfoPublicId(uploadResult.get("public_id"));
+        organization.setVerificationFile(uploadResult.get("url"));
+        organization.setVerificationInfoPublicId(uploadResult.get("public_id"));
     } else if (request.getVerificationFileUrl() != null) {
-        // Nếu gửi URL cũ thì giữ nguyên
-        userEntity.setVerificationFile(request.getVerificationFileUrl());
+        organization.setVerificationFile(request.getVerificationFileUrl());
     }
-    userMapper.updateAuthor(userEntity, request);
+
+    organizationMapper.updateAuthor(organization, request);
     if(request.getStatus() != null ){
         userEntity.setStatus(request.getStatus());
     }else {
         userEntity.setStatus(UserStatus.PENDING.getCode());
     }
-    userEntity.setOrganizationCreatedAt(LocalDateTime.now());
-    userEntity.setCategory(categoryEntity);
+
+//    organization.setOrganizationCreatedAt(LocalDateTime.now());
+    organization.setCategory(categoryEntity);
+    organization.setUser(userEntity); // link 2 chiều
+    userEntity.setOrganization(organization);
 
     return userMapper.toUserResponse(userRepository.save(userEntity));
 }

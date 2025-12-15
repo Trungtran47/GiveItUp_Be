@@ -42,6 +42,6 @@ public class CategoryEntity {
     private Set<PostEntity> posts;
 
     @OneToMany(mappedBy = "category", fetch = FetchType.LAZY)
-    private Set<UserEntity> users;
+    private Set<OrganizationEntity> organizations;
 
 }

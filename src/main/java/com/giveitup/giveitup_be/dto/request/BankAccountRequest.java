@@ -21,7 +21,7 @@ public class BankAccountRequest {
     String accountCode;           // Mã tài khoản
     String accountHolderName;   // Chủ tài khoản
     String bankName;
-    Long user;
+    Long organization;
     Long status;
 
 }

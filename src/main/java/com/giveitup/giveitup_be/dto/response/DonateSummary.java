@@ -21,40 +21,53 @@ public class DonateSummary {
         this.amount = amount;
         this.latestDonatedAt = latestDonatedAt;
 
+        OrganizationResponse orgResponse = null;
+        if (userEntity.getOrganization() != null) {
+            orgResponse = new OrganizationResponse(
+                    userEntity.getOrganization().getId(),
+                    userEntity.getOrganization().getOrganizationLogo(),
+                    userEntity.getOrganization().getOrganizationLogoPublicId(),
+                    userEntity.getOrganization().getOrganizationName(),
+                    null, // category có thể để null hoặc tạo CategoryResponse
+                    userEntity.getOrganization().getEstablishmentDate(),
+                    userEntity.getOrganization().getOrganizationAddress(),
+                    userEntity.getOrganization().getOrganizationEmail(),
+                    userEntity.getOrganization().getRegistrationCode(),
+                    userEntity.getOrganization().getOrganizationPhone(),
+                    userEntity.getOrganization().getVerificationFile(),
+                    userEntity.getOrganization().getVerificationInfoPublicId(),
+                    userEntity.getOrganization().getLinkInfoOrganization(),
+                    userEntity.getOrganization().getOrganizationDescription(),
+                    userEntity.getOrganization().getOrganizationApprovedAt(),
+                    userEntity.getOrganization().getCreatedAt(),
+                    userEntity.getOrganization().getUpdatedAt()
+            );
+        }
+
         this.user = new UserResponse(
-                userEntity.getId(),                        // id
-                userEntity.getUsername(),                 // username
-                userEntity.getFirstName(),                // firstName
-                userEntity.getLastName(),                 // lastName
-                userEntity.getDob(),                      // dob
-                userEntity.getGender(),                   // gender
-                userEntity.getEmail(),                    // email
-                userEntity.getPhoneNumber(),              // phoneNumber
-                userEntity.getRole().getName(),           // role
-                userEntity.getAddress(),                  // address
-                userEntity.getImageUser(),                // imageUser
-                userEntity.getPublicImageUserId(),        // publicImageUserId
-                userEntity.getCreatedAt(),                // createdAt
-                userEntity.getUpdatedAt(),                // updatedAt
-                userEntity.getStatus(),                   // status
-                userEntity.getOrganizationLogo(),         // organizationLogo
-                userEntity.getOrganizationLogoPublicId(), // organizationLogoPublicId
-                userEntity.getOrganizationName(),         // organizationName
-                null,                                     // category (hoặc map nếu cần)
-                userEntity.getEstablishmentDate(),        // establishmentDate
-                userEntity.getOrganizationAddress(),      // organizationAddress
-                userEntity.getOrganizationEmail(),        // organizationEmail
-                userEntity.getRegistrationCode(),         // registrationCode
-                userEntity.getOrganizationPhone(),        // organizationPhone
-                userEntity.getVerificationFile(),         // verificationFile
-                userEntity.getVerificationInfoPublicId(), // verificationInfoPublicId
-                userEntity.getLinkInfoOrganization(),     // linkInfoOrganization
-                userEntity.getOrganizationDescription(),  // organizationDescription
-                userEntity.getOrganizationCreatedAt(),   // organizationCreatedAt
+                userEntity.getId(),
+                userEntity.getUsername(),
+                userEntity.getFirstName(),
+                userEntity.getLastName(),
+                userEntity.getDob(),
+                userEntity.getGender(),
+                userEntity.getEmail(),
+                userEntity.getPhoneNumber(),
+                userEntity.getRole() != null ? userEntity.getRole().getName() : null,
+                userEntity.getAddress(),
+                userEntity.getImageUser(),
+                userEntity.getPublicImageUserId(),
+                userEntity.isPublic(),
+                userEntity.getIntroduce(),
+                userEntity.getCreatedAt(),
+                userEntity.getUpdatedAt(),
+                userEntity.getStatus(),
+                orgResponse, // truyền OrganizationResponse thay vì OrganizationEntity
                 null,
                 null,
                 null
         );
     }
+
 
 }

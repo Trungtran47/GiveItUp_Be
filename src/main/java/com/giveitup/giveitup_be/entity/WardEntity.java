@@ -17,16 +17,16 @@ public class WardEntity {
     Integer id;
     @Column(name = "province_id")
     Integer provinceId;
-    @Column(name = "name")
+    @Column(name = "name",columnDefinition = "NVARCHAR(MAX)")
      String name;
-    @Column(name = "slug")
+    @Column(name = "slug",columnDefinition = "NVARCHAR(MAX)")
      String slug;
     @Column(name = "type")
      String type;
-    @Column(name = "name_with_type")
+    @Column(name = "name_with_type",columnDefinition = "NVARCHAR(MAX)")
      String nameWithType;
-    @Column(name = "path")
+    @Column(name = "path",columnDefinition = "NVARCHAR(MAX)")
      String path;
-    @Column(name = "path_with_type")
+    @Column(name = "path_with_type",columnDefinition = "NVARCHAR(MAX)")
      String pathWithType;
 }

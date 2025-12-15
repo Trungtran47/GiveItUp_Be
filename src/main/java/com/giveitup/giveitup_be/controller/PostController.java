@@ -41,9 +41,9 @@ public class PostController {
                 .result("Post has been deleted")
                 .build();
     }
-    @GetMapping("/user/{userId}")
-    ApiResponse<PagingResponse<PostResponse>> getPostByUser(@PathVariable Long userId, SearchListPostRequest request) {
-        Page<PostResponse> page = postService.getPostByUserId(userId,request);
+    @GetMapping("/organization/{OrganizationId}")
+    ApiResponse<PagingResponse<PostResponse>> getPostByOrganizationId(@PathVariable Long OrganizationId, SearchListPostRequest request) {
+        Page<PostResponse> page = postService.getPostByOrganizationId(OrganizationId,request);
         PagingResponse.PagingInfo paging = PagingResponse.PagingInfo.builder()
                 .CurrentPage(request.getCurrentPage())
                 .NumberOfRecord(request.getPageSize())

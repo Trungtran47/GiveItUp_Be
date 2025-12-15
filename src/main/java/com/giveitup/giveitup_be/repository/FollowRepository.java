@@ -20,5 +20,5 @@ public interface FollowRepository extends JpaRepository<FollowEntity, Long> {
 
     Long countByFollower(UserEntity user);
     boolean existsByFollowerIdAndFollowingId(Long followerId, Long followingId);
-
+    List<FollowEntity> findTop10ByOrderByCreatedAtDesc();
 }

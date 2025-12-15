@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 @SuperBuilder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class SearchListPostRequest extends BasePagingRequest {
-    Long userId;
+    Long OrganizationId;
     String postTitle;
     Long status;
     Long categoryId;

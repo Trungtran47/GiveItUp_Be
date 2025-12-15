@@ -26,7 +26,7 @@ public class PayoutResponseAdmin {
 //    LocalDateTime approvedAt;
     LocalDateTime confirmedAt;
     LocalDateTime createdByAdminAt;
-    UserResponse requestedBy;
+    OrganizationResponse requestedBy;
 //    UserResponse approvedBy;
     UserResponse createdByAdmin;
 }

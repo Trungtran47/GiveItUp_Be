@@ -27,9 +27,9 @@ public interface UserMapper {
     @Mapping(target = "imageUser", ignore = true)
     void updateUser(@MappingTarget UserEntity userEntity, UserUpdateRequest request);
 
-    @Mapping(target = "role", ignore = true)
-    @Mapping(target = "category", ignore = true )
-    @Mapping(target = "organizationLogo", ignore = true)      // bỏ map MultipartFile
-    @Mapping(target = "verificationFile", ignore = true)
-    void updateAuthor(@MappingTarget UserEntity userEntity, AuthorCreationRequest request);
+//    @Mapping(target = "role", ignore = true)
+//    @Mapping(target = "category", ignore = true )
+//    @Mapping(target = "organizationLogo", ignore = true)      // bỏ map MultipartFile
+//    @Mapping(target = "verificationFile", ignore = true)
+//    void updateAuthor(@MappingTarget UserEntity userEntity, AuthorCreationRequest request);
 }

@@ -38,9 +38,9 @@ public class PaymentService {
 //                emitters.remove(orderId);
                 // Client đã disconnect → xóa emitter
                 emitters.remove(orderId);
-                emitter.complete();
+//                emitter.complete();
                 // Có thể log info, không nên log lỗi full stack
-                System.out.println("SSE client disconnected: " + orderId);
+                System.out.println(" [FIXED] Client ngắt kết nối order: " + orderId + ". Đã nuốt lỗi thành công.");
             }
         }
     }

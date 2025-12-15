@@ -9,6 +9,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.Objects;
 
@@ -21,6 +22,21 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(value = Exception.class)
 //    ResponseEntity<ApiResponse> handlingRuntimeException(RuntimeException exception) {
     ResponseEntity<ApiResponse> handlingRuntimeException(Exception exception) {
+        // --- ĐOẠN CODE MỚI THÊM VÀO ---
+        // Kiểm tra xem lỗi có phải do client ngắt kết nối (SSE/Network) không
+        if (exception instanceof IOException ||
+                (exception.getMessage() != null &&
+                        (exception.getMessage().contains("Broken pipe") ||
+                                exception.getMessage().contains("connection was aborted")))) {
+
+            // Chỉ log cảnh báo nhẹ, không log error stack trace
+            log.warn("Client disconnected or Network error (Ignored): {}", exception.getMessage());
+
+            // Trả về null để Spring ngừng xử lý request này,
+            // tránh lỗi HttpMessageNotWritableException
+            return null;
+        }
+        // ------------------------------
         log.error("Exception: ", exception);
         ApiResponse apiResponse = new ApiResponse();
 

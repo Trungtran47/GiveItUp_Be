@@ -116,7 +116,7 @@ public class SearchService {
         dto.setId(u.getId());
         dto.setFullName(u.getFirstName() + " " + u.getLastName());
         dto.setImageUser(u.getImageUser());
-        dto.setOrganizationName(u.getOrganizationName());
+        dto.setOrganizationName(u.getOrganization().getOrganizationName());
         return dto;
     }
 

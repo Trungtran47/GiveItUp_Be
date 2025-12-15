@@ -24,6 +24,6 @@ public class BankAccountResponse {
     LocalDateTime createdAt;
     LocalDateTime updatedAt;
     Long status;
-    Long userId;
+    Long organizationId;
 
 }

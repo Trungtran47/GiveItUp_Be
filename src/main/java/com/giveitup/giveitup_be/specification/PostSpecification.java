@@ -1,6 +1,7 @@
 package com.giveitup.giveitup_be.specification;
 
 import com.giveitup.giveitup_be.entity.LikeEntity;
+import com.giveitup.giveitup_be.entity.OrganizationEntity;
 import com.giveitup.giveitup_be.entity.PostEntity;
 import com.giveitup.giveitup_be.entity.UserEntity;
 import com.giveitup.giveitup_be.enums.PostStatus;
@@ -32,12 +33,12 @@ public class PostSpecification {
     }
 
 
-    public static Specification<PostEntity> hasUserId(Long userId) {
+    public static Specification<PostEntity> hasOrganizationId(Long OrganizationId) {
         return (root, query, cb) -> {
-            if (userId == null) {
+            if (OrganizationId == null) {
                 return cb.conjunction(); // không filter
             }
-            return cb.equal(root.get("user").get("id"), userId);
+            return cb.equal(root.get("organization").get("id"), OrganizationId);
         };
     }
     public static Specification<PostEntity> hasStatus(Long status) {
@@ -117,35 +118,27 @@ public class PostSpecification {
     public static Specification<PostEntity> containsKeyword(String keyword) {
         return (root, query, cb) -> {
 
-            // ---- 1. Predicate bắt buộc: chỉ lấy bài có status = 20 ----
             Predicate statusPredicate = cb.equal(root.get("status"), PostStatus.ACTIVE.getCode());
 
-            // ---- 2. Nếu không có keyword → chỉ lọc theo status ----
             if (keyword == null || keyword.trim().isEmpty()) {
                 return statusPredicate;
             }
 
             String like = "%" + keyword.toLowerCase() + "%";
 
-            // Tên, địa chỉ
             Predicate titlePredicate = cb.like(cb.lower(root.get("title")), like);
             Predicate addressPredicate = cb.like(cb.lower(root.get("address")), like);
 
-            // JOIN User để tìm theo tên tổ chức
-            Join<PostEntity, UserEntity> userJoin = root.join("user", JoinType.LEFT);
-            Predicate organizationPredicate =
-                    cb.like(cb.lower(userJoin.get("organizationName")), like);
+            // Join organization
+            Join<PostEntity, OrganizationEntity> orgJoin = root.join("organization", JoinType.LEFT);
+            Predicate organizationPredicate = cb.like(cb.lower(orgJoin.get("organizationName")), like);
 
-            // ---- 3. Kết hợp: (title OR address OR organization) AND status = 20 ----
-            Predicate keywordPredicates = cb.or(
-                    titlePredicate,
-                    addressPredicate,
-                    organizationPredicate
-            );
+            Predicate keywordPredicate = cb.or(titlePredicate, addressPredicate, organizationPredicate);
 
-            return cb.and(keywordPredicates, statusPredicate);
+            return cb.and(statusPredicate, keywordPredicate);
         };
     }
+
 
 
 }

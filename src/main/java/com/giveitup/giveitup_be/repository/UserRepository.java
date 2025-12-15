@@ -23,4 +23,6 @@ public interface UserRepository extends JpaRepository<UserEntity, Long>, JpaSpec
             LIKE LOWER(CONCAT('%', :keyword, '%'))
     """)
     List<UserEntity> searchAuthors(@Param("keyword") String keyword);
+
+    long count(); // Tổng user
 }

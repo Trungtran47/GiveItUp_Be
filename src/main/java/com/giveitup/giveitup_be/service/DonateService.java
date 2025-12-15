@@ -66,7 +66,7 @@ public class DonateService {
             Pageable pageable = PageRequest.of(
                     pageIndex,
                     request.getPageSize(),
-                    Sort.by("createdAt").ascending()
+                    Sort.by("createdAt").descending()
             );
             Page<DonateEntity> page = donateRepository.findAll(spec, pageable);
             return page.map(donateMapper::toDonateResponse);

@@ -60,7 +60,7 @@ public class CategoryController {
                 .build();
     }
     @GetMapping("/{categoryId}")
-    ApiResponse<CategoryResponse> getUser(@PathVariable("categoryId") Long categoryId) {
+    ApiResponse<CategoryResponse> getCa(@PathVariable("categoryId") Long categoryId) {
         return ApiResponse.<CategoryResponse>builder()
                 .result(categoryService.getCategoryById(categoryId))
                 .build();

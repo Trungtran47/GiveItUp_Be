@@ -16,12 +16,13 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 public class ProvinceEntity {
     @Id
     Integer id;
-    @Column(name = "name")
+
+    @Column(name = "name",columnDefinition = "NVARCHAR(MAX)")
      String name;
-    @Column(name = "name_slug")
+    @Column(name = "name_slug",columnDefinition = "NVARCHAR(MAX)")
      String nameSlug;
-    @Column(name = "full_name")
+    @Column(name = "full_name",columnDefinition = "NVARCHAR(MAX)")
      String fullName;
-    @Column(name = "type")
+    @Column(name = "type",columnDefinition = "NVARCHAR(MAX)")
      String type;
 }

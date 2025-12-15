@@ -20,22 +20,21 @@ public class PayoutController {
     // -----------------------------------------
     // 1. AUTHOR REQUEST PAYOUT
     // -----------------------------------------
-    @PostMapping("/request/{authorId}")
+    @PostMapping("/request")
     public ApiResponse<PayoutResponse> authorRequest(
-            @RequestBody CreatePayoutRequest req,
+            @RequestBody CreatePayoutRequest req
+    ) {
+        return ApiResponse.<PayoutResponse>builder()
+                .result(payoutService.authorRequestPayout(req))
+                .build();
+    }
+    @PutMapping("/update/{authorId}")
+    public ApiResponse<PayoutResponse> authorUpdatePayout(
+            @RequestBody UpdatePayoutRequest req,
             @PathVariable Long authorId
     ) {
         return ApiResponse.<PayoutResponse>builder()
-                .result(payoutService.authorRequestPayout(req, authorId))
-                .build();
-    }
-    @PutMapping("/update/{userId}")
-    public ApiResponse<PayoutResponse> authorUpdatePayout(
-            @RequestBody UpdatePayoutRequest req,
-            @PathVariable Long userId
-    ) {
-        return ApiResponse.<PayoutResponse>builder()
-                .result(payoutService.updatePayout(req, userId))
+                .result(payoutService.updatePayout(req, authorId))
                 .build();
     }
 
@@ -87,12 +86,12 @@ public class PayoutController {
                 .result(payoutService.adminCreatePayout(req, adminId))
                 .build();
     }
-    @GetMapping("/author/{userId}")
+    @GetMapping("/author/{OrganizationId}")
     ApiResponse<PagingResponse<PayoutResponse>> getPayoutsByUserId(
-            @PathVariable Long userId,
+            @PathVariable Long OrganizationId,
             @ModelAttribute BasePagingRequest request
     ) {
-        Page<PayoutResponse> page = payoutService.getPayoutsByUserId(userId,request);
+        Page<PayoutResponse> page = payoutService.getPayoutsOrganizationId(OrganizationId,request);
         PagingResponse.PagingInfo paging = PagingResponse.PagingInfo.builder()
                 .CurrentPage(request.getCurrentPage())
                 .NumberOfRecord(request.getPageSize())

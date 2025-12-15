@@ -42,8 +42,8 @@ public class BankAccountEntity {
     LocalDateTime updatedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    UserEntity user;
+    @JoinColumn(name = "organization_id")
+    OrganizationEntity organization;
 
     @OneToMany(mappedBy = "bankAccount", cascade = CascadeType.ALL, orphanRemoval = true)
     List<PostEntity> posts = new ArrayList<>();

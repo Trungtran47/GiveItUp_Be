@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.ColumnDefault;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -45,56 +46,35 @@ public class UserEntity {
     String address;
     String imageUser;
     String publicImageUserId;
-    //  Thông tin cho tổ chức hoặc nhóm từ thiện
-    Long status = (long) UserStatus.USER.getCode();
-    String organizationLogo;
-    String organizationLogoPublicId;
-    @Column(columnDefinition = "NVARCHAR(255)")
-    String organizationName;       // Tên tổ chức
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id")
-    CategoryEntity category;         // Lĩnh vực hoạt động
-    LocalDate establishmentDate;   // Thời gian thành lập
-    @Column(columnDefinition = "NVARCHAR(255)")
-    String organizationAddress;    // Địa điểm tổ chức
-    String organizationEmail;      // Email tổ chức
-    String registrationCode;       // Mã số đăng ký
-    String organizationPhone;      // Số điện thoại tổ chức
-    String verificationFile;       // Thông tin xác nhận / giấy tờ xác thực
-    String verificationInfoPublicId;
-    String linkInfoOrganization;   // link thông tin group/ fb
-    @Column(columnDefinition = "NVARCHAR(MAX)")
-    String organizationDescription; // mô ta tổ chức
-    LocalDateTime organizationCreatedAt; // Ngày nâng cấp tổ chức
+    @Builder.Default
+    @Column(nullable = false)
+    boolean isPublic = false;
 
-    // Thời gian tạo & cập nhật
+
+    @Column( columnDefinition = "NVARCHAR(MAX)")
+    String introduce;
+    Long status = (long) UserStatus.USER.getCode();
+    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    OrganizationEntity organization;
     @CreatedDate
     @Column(updatable = false)
     LocalDateTime createdAt;
     @LastModifiedDate
     LocalDateTime updatedAt;
-    //    @ManyToMany
-//    Set<RoleEntity> roleEntities;
     @ManyToOne(fetch = FetchType.LAZY)
      RoleEntity role;
 
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
-     Set<PostEntity> posts;
-    // Danh sách chuển khoản đã ủng hộ cho bài post
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     List<DonateEntity> donations = new ArrayList<>();
 
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
-    List<BankAccountEntity> bankAccounts ;
-    // bản like
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     List<LikeEntity> likes = new ArrayList<>();
-    // view
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     List<PostViewEntity> postViews = new ArrayList<>();
 
-    @OneToMany(mappedBy = "requestedBy", cascade = CascadeType.ALL)
-    List<PayoutEntity> payoutRequests = new ArrayList<>();
+//    @OneToMany(mappedBy = "requestedBy", cascade = CascadeType.ALL)
+//    List<PayoutEntity> payoutRequests = new ArrayList<>();
 
     @OneToMany(mappedBy = "createdByAdmin", cascade = CascadeType.ALL)
     List<PayoutEntity> payoutTransfers = new ArrayList<>();

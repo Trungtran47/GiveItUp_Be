@@ -14,5 +14,5 @@ import java.util.Optional;
 
 @Repository
 public interface BankAccountRepository extends JpaRepository<BankAccountEntity, Long>, JpaSpecificationExecutor<BankAccountEntity> {
-    List<BankAccountEntity> findAllByUser_Id(Long id);
+    List<BankAccountEntity> findAllByOrganization_Id(Long id);
 }

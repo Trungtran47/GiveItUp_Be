@@ -13,7 +13,7 @@ public interface PostMapper {
     @Mapping(target = "images", ignore = true)
     @Mapping(target = "video", ignore = true)
     @Mapping(target = "bankAccount", ignore = true)
-    @Mapping(target = "user", ignore = true)
+    @Mapping(target = "organization", ignore = true)
     @Mapping(target = "payouts", ignore = true)
     PostEntity toPost(PostRequest request);
 //    @Mapping(target = "payouts", ignore = true)

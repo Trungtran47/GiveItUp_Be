@@ -11,9 +11,9 @@ import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface BankAccountMapper {
-    @Mapping(target = "user", ignore = true)
+    @Mapping(target = "organization", ignore = true)
     BankAccountEntity toBankAccount(BankAccountRequest request);
-    @Mapping(source = "user.id", target = "userId")
+    @Mapping(source = "organization.id", target = "organizationId")
     BankAccountResponse toBankAccountResponse(BankAccountEntity bankAccountEntity);
     List<BankAccountResponse> toListBankAccountResponse(List<BankAccountEntity> bankAccountEntities);
 //    void updateBankAccount(@MappingTarget BankAccountEntity bankAccountEntity, BankAccountRequest request);

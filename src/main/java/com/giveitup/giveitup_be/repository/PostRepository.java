@@ -41,7 +41,21 @@ public interface PostRepository extends JpaRepository<PostEntity, Long>, JpaSpec
             @Param("user") UserEntity user,
             Pageable pageable
     );
+    // Đếm bài viết theo trạng thái
+    long countByStatus(Long status);
 
+    // Đếm bài viết đã hết hạn (endDate < now)
+    @Query("SELECT COUNT(p) FROM PostEntity p WHERE p.endDate < CURRENT_TIMESTAMP")
+    long countExpiredPosts();
+
+    // Lấy top bài viết donation cao nhất
+    @Query("SELECT p FROM PostEntity p ORDER BY p.donatedAmount DESC")
+    List<PostEntity> findTopPerformingPosts(Pageable pageable);
+
+    // Đếm bài viết theo Category
+    @Query("SELECT p.category.categoryName as name, COUNT(p) as value " +
+            "FROM PostEntity p GROUP BY p.category.categoryName")
+    List<Object[]> countPostsByCategory();
     /* ================= CHART DAY ================= */
     @Query(value = """
     SELECT
@@ -59,35 +73,39 @@ public interface PostRepository extends JpaRepository<PostEntity, Long>, JpaSpec
     LEFT JOIN (
         SELECT FORMAT(d.created_at,'HH') AS h, COUNT(*) AS donateCount, SUM(d.amount) AS totalDonated
         FROM donations d
-        WHERE d.user_id = :authorId
+        JOIN posts p ON d.post_id = p.id
+        WHERE p.organization_id = :organizationId
           AND d.created_at BETWEEN :start AND :end
         GROUP BY FORMAT(d.created_at,'HH')
     ) d ON d.h = t.time
     LEFT JOIN (
         SELECT FORMAT(v.created_at,'HH') AS h, ISNULL(SUM(v.view_count),0) AS totalView
         FROM post_view v
-        WHERE v.user_id = :authorId
+        JOIN posts p ON v.post_id = p.id
+        WHERE p.organization_id = :organizationId
           AND v.created_at BETWEEN :start AND :end
         GROUP BY FORMAT(v.created_at,'HH')
     ) v ON v.h = t.time
     LEFT JOIN (
         SELECT FORMAT(l.created_at,'HH') AS h, COUNT(*) AS totalLike
         FROM likes l
-        WHERE l.user_id = :authorId
+        JOIN posts p ON l.post_id = p.id
+        WHERE p.organization_id = :organizationId
           AND l.created_at BETWEEN :start AND :end
         GROUP BY FORMAT(l.created_at,'HH')
     ) l ON l.h = t.time
     LEFT JOIN (
         SELECT FORMAT(c.created_at,'HH') AS h, COUNT(*) AS totalComment
         FROM comments c
-        WHERE c.user_id = :authorId
+        JOIN posts p ON c.post_id = p.id
+        WHERE p.organization_id = :organizationId
           AND c.created_at BETWEEN :start AND :end
         GROUP BY FORMAT(c.created_at,'HH')
     ) c ON c.h = t.time
     ORDER BY t.time
 """, nativeQuery = true)
     List<Map<String, Object>> chartDayByAuthor(
-            @Param("authorId") Long authorId,
+            @Param("organizationId") Long organizationId,
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end
     );
@@ -109,37 +127,41 @@ public interface PostRepository extends JpaRepository<PostEntity, Long>, JpaSpec
         ISNULL(c.totalComment,0) AS totalComment
     FROM days d
     LEFT JOIN (
-        SELECT CAST(created_at AS DATE) AS day, COUNT(*) AS donateCount, SUM(amount) AS totalDonated
-        FROM donations
-        WHERE user_id = :authorId
-          AND created_at BETWEEN :start AND :end
-        GROUP BY CAST(created_at AS DATE)
+        SELECT CAST(d.created_at AS DATE) AS day, COUNT(*) AS donateCount, SUM(d.amount) AS totalDonated
+        FROM donations d
+        JOIN posts p ON d.post_id = p.id
+        WHERE p.organization_id = :organizationId
+          AND d.created_at BETWEEN :start AND :end
+        GROUP BY CAST(d.created_at AS DATE)
     ) don ON don.day = d.day
      LEFT JOIN (
-         SELECT CAST(created_at AS DATE) AS day, ISNULL(SUM(view_count),0) AS totalView
-         FROM post_view
-         WHERE user_id = :authorId
-           AND created_at BETWEEN :start AND :end
-         GROUP BY CAST(created_at AS DATE)
+         SELECT CAST(v.created_at AS DATE) AS day, ISNULL(SUM(v.view_count),0) AS totalView
+         FROM post_view v
+         JOIN posts p ON v.post_id = p.id
+         WHERE p.organization_id = :organizationId
+           AND v.created_at BETWEEN :start AND :end
+         GROUP BY CAST(v.created_at AS DATE)
      ) v ON v.day = d.day
     LEFT JOIN (
-        SELECT CAST(created_at AS DATE) AS day, COUNT(*) AS totalLike
-        FROM likes
-        WHERE user_id = :authorId
-          AND created_at BETWEEN :start AND :end
-        GROUP BY CAST(created_at AS DATE)
+        SELECT CAST(l.created_at AS DATE) AS day, COUNT(*) AS totalLike
+        FROM likes l
+        JOIN posts p ON l.post_id = p.id
+        WHERE p.organization_id = :organizationId
+          AND l.created_at BETWEEN :start AND :end
+        GROUP BY CAST(l.created_at AS DATE)
     ) l ON l.day = d.day
     LEFT JOIN (
-        SELECT CAST(created_at AS DATE) AS day, COUNT(*) AS totalComment
-        FROM comments
-        WHERE user_id = :authorId
-          AND created_at BETWEEN :start AND :end
-        GROUP BY CAST(created_at AS DATE)
+        SELECT CAST(c.created_at AS DATE) AS day, COUNT(*) AS totalComment
+        FROM comments c
+        JOIN posts p ON c.post_id = p.id
+        WHERE p.organization_id = :organizationId
+          AND c.created_at BETWEEN :start AND :end
+        GROUP BY CAST(c.created_at AS DATE)
     ) c ON c.day = d.day
     ORDER BY d.day
 """, nativeQuery = true)
     List<Map<String, Object>> chartMonthByAuthor(
-            @Param("authorId") Long authorId,
+            @Param("organizationId") Long organizationId,
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end
     );
@@ -159,37 +181,41 @@ public interface PostRepository extends JpaRepository<PostEntity, Long>, JpaSpec
         ISNULL(c.totalComment,0) AS totalComment
     FROM months m
     LEFT JOIN (
-        SELECT YEAR(created_at) AS y, MONTH(created_at) AS mo, COUNT(*) AS donateCount, SUM(amount) AS totalDonated
-        FROM donations
-        WHERE user_id = :authorId
-          AND created_at BETWEEN :start AND :end
-        GROUP BY YEAR(created_at), MONTH(created_at)
+        SELECT YEAR(d.created_at) AS y, MONTH(d.created_at) AS mo, COUNT(*) AS donateCount, SUM(d.amount) AS totalDonated
+        FROM donations d
+        JOIN posts p ON d.post_id = p.id
+        WHERE p.organization_id = :organizationId
+          AND d.created_at BETWEEN :start AND :end
+        GROUP BY YEAR(d.created_at), MONTH(d.created_at)
     ) don ON don.y = YEAR(m.monthStart) AND don.mo = MONTH(m.monthStart)
     LEFT JOIN (
-        SELECT YEAR(created_at) AS y, MONTH(created_at) AS mo, ISNULL(SUM(view_count),0) AS totalView
-        FROM post_view
-        WHERE user_id = :authorId
-          AND created_at BETWEEN :start AND :end
-        GROUP BY YEAR(created_at), MONTH(created_at)
+        SELECT YEAR(v.created_at) AS y, MONTH(v.created_at) AS mo, ISNULL(SUM(v.view_count),0) AS totalView
+        FROM post_view v
+        JOIN posts p ON v.post_id = p.id
+        WHERE p.organization_id = :organizationId
+          AND v.created_at BETWEEN :start AND :end
+        GROUP BY YEAR(v.created_at), MONTH(v.created_at)
     ) v ON v.y = YEAR(m.monthStart) AND v.mo = MONTH(m.monthStart)
     LEFT JOIN (
-        SELECT YEAR(created_at) AS y, MONTH(created_at) AS mo, COUNT(*) AS totalLike
-        FROM likes
-        WHERE user_id = :authorId
-          AND created_at BETWEEN :start AND :end
-        GROUP BY YEAR(created_at), MONTH(created_at)
+        SELECT YEAR(l.created_at) AS y, MONTH(l.created_at) AS mo, COUNT(*) AS totalLike
+        FROM likes l
+        JOIN posts p ON l.post_id = p.id
+        WHERE p.organization_id = :organizationId
+          AND l.created_at BETWEEN :start AND :end
+        GROUP BY YEAR(l.created_at), MONTH(l.created_at)
     ) l ON l.y = YEAR(m.monthStart) AND l.mo = MONTH(m.monthStart)
     LEFT JOIN (
-        SELECT YEAR(created_at) AS y, MONTH(created_at) AS mo, COUNT(*) AS totalComment
-        FROM comments
-        WHERE user_id = :authorId
-          AND created_at BETWEEN :start AND :end
-        GROUP BY YEAR(created_at), MONTH(created_at)
+        SELECT YEAR(c.created_at) AS y, MONTH(c.created_at) AS mo, COUNT(*) AS totalComment
+        FROM comments c
+        JOIN posts p ON c.post_id = p.id
+        WHERE p.organization_id = :organizationId
+          AND c.created_at BETWEEN :start AND :end
+        GROUP BY YEAR(c.created_at), MONTH(c.created_at)
     ) c ON c.y = YEAR(m.monthStart) AND c.mo = MONTH(m.monthStart)
     ORDER BY m.monthStart
 """, nativeQuery = true)
     List<Map<String, Object>> chartYearByAuthor(
-            @Param("authorId") Long authorId,
+            @Param("organizationId") Long organizationId,
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end
     );
@@ -200,49 +226,57 @@ SELECT
     /* POSTS */
     (SELECT COUNT(*)
      FROM posts p
-     WHERE p.user_id = :authorId
+     WHERE p.organization_id = :organizationId
        AND p.created_at BETWEEN :start AND :end
     ) AS totalPost,
 
     /* DONATIONS */
     (SELECT COUNT(*)
      FROM donations d
-     WHERE d.user_id = :authorId
+     JOIN posts p ON d.post_id = p.id
+     WHERE p.organization_id = :organizationId
        AND d.created_at BETWEEN :start AND :end
     ) AS donateCount,
 
     (SELECT ISNULL(SUM(d.amount),0)
      FROM donations d
-     WHERE d.user_id = :authorId
+     JOIN posts p ON d.post_id = p.id
+     WHERE p.organization_id = :organizationId
        AND d.created_at BETWEEN :start AND :end
     ) AS totalDonated,
 
-    /* VIEWS - tính dựa trên viewCount */
+    /* VIEWS */
     (SELECT ISNULL(SUM(v.view_count),0)
      FROM post_view v
-     WHERE v.user_id = :authorId
+     JOIN posts p ON v.post_id = p.id
+     WHERE p.organization_id = :organizationId
        AND v.created_at BETWEEN :start AND :end
     ) AS totalView,
 
     /* LIKES */
     (SELECT COUNT(*)
      FROM likes l
-     WHERE l.user_id = :authorId
+     JOIN posts p ON l.post_id = p.id
+     WHERE p.organization_id = :organizationId
        AND l.created_at BETWEEN :start AND :end
     ) AS totalLike,
 
     /* COMMENTS */
     (SELECT COUNT(*)
      FROM comments c
-     WHERE c.user_id = :authorId
+     JOIN posts p ON c.post_id = p.id
+     WHERE p.organization_id = :organizationId
        AND c.created_at BETWEEN :start AND :end
     ) AS totalComment
 """, nativeQuery = true)
     DashboardSummaryProjection summaryByAuthor(
-            @Param("authorId") Long authorId,
+            @Param("organizationId") Long organizationId,
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end
     );
+
+
+
 
 
 }

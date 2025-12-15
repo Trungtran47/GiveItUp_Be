@@ -2,11 +2,10 @@ package com.giveitup.giveitup_be.service;
 
 import com.giveitup.giveitup_be.dto.request.CommentRequest;
 import com.giveitup.giveitup_be.dto.request.CommentResponse;
+import com.giveitup.giveitup_be.dto.request.SearchListDonateRequest;
 import com.giveitup.giveitup_be.dto.response.CommentResponseForUser;
-import com.giveitup.giveitup_be.entity.CommentEntity;
-import com.giveitup.giveitup_be.entity.PostEntity;
-import com.giveitup.giveitup_be.entity.RoleEntity;
-import com.giveitup.giveitup_be.entity.UserEntity;
+import com.giveitup.giveitup_be.dto.response.DonateResponse;
+import com.giveitup.giveitup_be.entity.*;
 import com.giveitup.giveitup_be.exception.AppException;
 import com.giveitup.giveitup_be.exception.ErrorCode;
 import com.giveitup.giveitup_be.mapper.CommentMapper;
@@ -15,7 +14,13 @@ import com.giveitup.giveitup_be.repository.CommentRepository;
 import com.giveitup.giveitup_be.repository.PostRepository;
 import com.giveitup.giveitup_be.repository.RoleRepository;
 import com.giveitup.giveitup_be.repository.UserRepository;
+import com.giveitup.giveitup_be.specification.DonateSpecification;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -65,6 +70,7 @@ public class CommentService {
         List<CommentEntity> entities = commentRepository.findByUserIdOrderByCreatedAtDesc(userService.getMyInfoReturnEntity().getId());
         return commentMapper.toCommentResponseForUserList(entities);
    }
+
     @Transactional
     public void deleteComment(Long userId, Long commentId) {
         CommentEntity comment = commentRepository.findById(commentId)
@@ -83,7 +89,7 @@ public class CommentService {
         response.setUserId(comment.getUser().getId());
         if (comment.getUser().getRole() != null &&
                 comment.getUser().getRole().getName().equals(roleAuthor.getName())) {
-            response.setAvatar(comment.getUser().getOrganizationLogo());
+            response.setAvatar(comment.getUser().getOrganization().getOrganizationLogo());
         } else {
             response.setAvatar(comment.getUser().getImageUser());
         }

@@ -11,8 +11,10 @@ import com.giveitup.giveitup_be.enums.PayoutStatus;
 import com.giveitup.giveitup_be.enums.PayoutType;
 import com.giveitup.giveitup_be.exception.AppException;
 import com.giveitup.giveitup_be.exception.ErrorCode;
+import com.giveitup.giveitup_be.mapper.OrganizationMapper;
 import com.giveitup.giveitup_be.mapper.PostMapper;
 import com.giveitup.giveitup_be.mapper.UserMapper;
+import com.giveitup.giveitup_be.repository.OrganizationRepository;
 import com.giveitup.giveitup_be.repository.PayoutRepository;
 import com.giveitup.giveitup_be.repository.PostRepository;
 import com.giveitup.giveitup_be.repository.UserRepository;
@@ -41,14 +43,16 @@ public class PayoutService {
     CloudinaryService cloudinaryService;
     PostMapper postMapper;
     UserMapper userMapper;
+    OrganizationMapper organizationMapper;
+    UserService userService;
     // -----------------------------------------------------
     // 1. AUTHOR REQUEST PAYOUT
     // -----------------------------------------------------
-    public PayoutResponse authorRequestPayout(CreatePayoutRequest req, Long authorId) {
+    public PayoutResponse authorRequestPayout(CreatePayoutRequest req) {
+        UserEntity user = userService.getMyInfoReturnEntity();
         PostEntity post = postRepo.findById(req.getPostId())
                 .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_EXISTED));
-
-        if (!post.getUser().getId().equals(authorId)) {
+        if (!post.getOrganization().getUser().getId().equals(user.getId())) {
             throw new AppException(ErrorCode.NOT_AUTHOR);
         }
         PayoutEntity payout = PayoutEntity.builder()
@@ -57,7 +61,7 @@ public class PayoutService {
                 .note(req.getNote())
                 .type(PayoutType.REQUEST.name())
                 .status(PayoutStatus.PENDING.getCode())
-                .requestedBy(post.getUser())
+                .requestedBy(user.getOrganization())
                 .requestedAt(LocalDateTime.now())
                 .build();
 
@@ -69,7 +73,7 @@ public class PayoutService {
         PayoutEntity payout = payoutRepo.findById(req.getPayoutId())
                 .orElseThrow(() -> new AppException(ErrorCode.PAYOUT_NOT_FOUND));
 
-        if (!payout.getPost().getUser().getId().equals(authorId)) {
+        if (!payout.getPost().getOrganization().getId().equals(authorId)) {
             throw new AppException(ErrorCode.NOT_AUTHOR);
         }
 
@@ -90,7 +94,7 @@ public class PayoutService {
                 .orElseThrow(() -> new AppException(ErrorCode.PAYOUT_NOT_FOUND));
 
         // Kiểm tra chủ sở hữu
-        if (!payout.getPost().getUser().getId().equals(authorId)) {
+        if (!payout.getPost().getOrganization().getId().equals(authorId)) {
             throw new AppException(ErrorCode.NOT_AUTHOR);
         }
 
@@ -154,7 +158,7 @@ public class PayoutService {
         PayoutEntity payout = payoutRepo.findById(payoutId)
                 .orElseThrow(() -> new AppException(ErrorCode.PAYOUT_NOT_FOUND));
 
-        if (!payout.getPost().getUser().getId().equals(authorId)) {
+        if (!payout.getPost().getOrganization().getId().equals(authorId)) {
             throw new AppException(ErrorCode.NOT_AUTHOR);
         }
 
@@ -188,7 +192,7 @@ public class PayoutService {
         payoutRepo.save(payout);
         return toResponse(payout);
     }
-    public Page<PayoutResponse> getPayoutsByUserId(Long userId, BasePagingRequest request) {
+    public Page<PayoutResponse> getPayoutsOrganizationId(Long OrganizationId, BasePagingRequest request) {
 
         int pageIndex = Math.max(request.getCurrentPage() - 1, 0);
 
@@ -198,7 +202,7 @@ public class PayoutService {
                 Sort.by("requestedAt").descending()
         );
 
-        Page<PayoutEntity> payouts = payoutRepo.findByPost_User_Id(userId, pageable);
+        Page<PayoutEntity> payouts = payoutRepo.findByPost_Organization_Id(OrganizationId, pageable);
 
         return payouts.map(this::toResponse);
     }
@@ -260,7 +264,7 @@ public class PayoutService {
                 .createdByAdminAt(p.getCreatedByAdminAt())
 //                .approvedAt(p.getApprovedAt())
                 .confirmedAt(p.getConfirmedAt())
-                .requestedBy(p.getRequestedBy() != null ? userMapper.toUserResponse(p.getRequestedBy()) : null)
+                .requestedBy(p.getRequestedBy() != null ? organizationMapper.toOrganizationResponse(p.getRequestedBy()) : null)
 //                .approvedBy(p.getApprovedBy() != null ? userMapper.toUserResponse(p.getApprovedBy()) : null)
                 .createdByAdmin(p.getCreatedByAdmin() != null ? userMapper.toUserResponse(p.getCreatedByAdmin()) : null)
                 .build();

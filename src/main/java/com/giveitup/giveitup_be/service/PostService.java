@@ -50,23 +50,26 @@ public class PostService {
     PostUpdateMapper postUpdateMapper;
     DonateRepository donateRepository;
     ImageRepository imageRepository;
+    OrganizationRepository organizationRepository;
     @PreAuthorize("hasRole('AUTHOR')")
     public PostResponse createPost(PostRequest request) {
         // B1. Map request sang entity
         PostEntity postEntity = postMapper.toPost(request);
         try {
             // B2. Lưu post trước (để có ID)
-            UserEntity userEntity = userRepository.findById(request.getUser()).orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_EXISTED));
+            OrganizationEntity organizationEntity = organizationRepository.findById(request.getOrganization()).orElseThrow(() -> new AppException(ErrorCode.ORGANIZATION_NOT_EXISTED));
 
             CategoryEntity categoryEntity = categoryRepository.findById(request.getCategory())
                     .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_EXISTED));
             BankAccountEntity bankAccountEntity = bankAccountRepository.findById(request.getBankAccount()).
                     orElseThrow(() -> new AppException(ErrorCode.BANK_ACCOUNT_NOT_EXISTED));
 
-            postEntity.setUser(userEntity);
+            postEntity.setOrganization(organizationEntity);
             postEntity.setCategory(categoryEntity);
             postEntity.setBankAccount(bankAccountEntity);
             postEntity.setDonatedAmount(0.0);
+            postEntity.setLikeCount(0L);    // bắt buộc
+            postEntity.setViewCount(0L);
             postEntity.setStatus(PostStatus.ACTIVE.getCode());
             postEntity.setEndDate(request.getEndDate());
             postEntity.setStatusName(PostStatus.ACTIVE.getLabel());
@@ -245,9 +248,9 @@ public class PostService {
         }
     }
 
-    public Page<PostResponse> getPostByUserId(Long userId, SearchListPostRequest request) {
+    public Page<PostResponse> getPostByOrganizationId(Long OrganizationId, SearchListPostRequest request) {
         Specification<PostEntity> spec = Specification.allOf(
-                PostSpecification.hasUserId(userId),
+                PostSpecification.hasOrganizationId(OrganizationId),
                 PostSpecification.hasTitle(request.getPostTitle()),
                 PostSpecification.hasStatus(request.getStatus()),
                 PostSpecification.hasCreatedAt(request.getCreatedAt())
@@ -261,7 +264,6 @@ public class PostService {
         );
 
         Page<PostEntity> page = postRepository.findAll(spec, pageable);
-        log.info("Found {} users", page.getTotalElements());
         return page.map(post -> {
             PostResponse response = postMapper.toPostResponse(post);
             response.setPayouts(mapPayouts(post));  // map tay
@@ -301,7 +303,7 @@ public class PostService {
 
     public Page<PostResponse> getPosts(SearchListPostRequest request) {
         Specification<PostEntity> spec = Specification.allOf(
-                        PostSpecification.hasUserId(request.getUserId()))
+                        PostSpecification.hasOrganizationId(request.getOrganizationId()))
                 .and(PostSpecification.hasTitle(request.getPostTitle()))
                 .and(PostSpecification.hasCategory(request.getCategoryId()))
                 .and(PostSpecification.hasCreatedAt(request.getCreatedAt()))
@@ -321,7 +323,7 @@ public class PostService {
     @PreAuthorize("hasRole('ADMIN')")
     public Page<PostResponse> getPostsAdmin(SearchListPostRequest request) {
         Specification<PostEntity> spec = Specification.allOf(
-                        PostSpecification.hasUserId(request.getUserId()))
+                        PostSpecification.hasOrganizationId(request.getOrganizationId()))
                 .and(PostSpecification.hasTitle(request.getPostTitle()))
                 .and(PostSpecification.hasCategory(request.getCategoryId()))
                 .and(PostSpecification.hasCreatedAt(request.getCreatedAt()))

@@ -32,10 +32,10 @@ public class BankAccountController {
                 .result(bankAccountService.updateBankAccount(request))
                 .build();
     }
-    @GetMapping(path = "/getBy_userId/{userId}")
-    public ApiResponse<List<BankAccountResponse>> getBAbyUserId(@PathVariable Long userId) {
+    @GetMapping(path = "/getBy_organizationId/{OrganizationId}")
+    public ApiResponse<List<BankAccountResponse>> getBAbyOrganizationId(@PathVariable Long OrganizationId) {
         return ApiResponse.<List<BankAccountResponse>>builder()
-                .result(bankAccountService.getBankAccountsByUserId(userId))
+                .result(bankAccountService.getBankAccountsByUserId(OrganizationId))
                 .build();
     }
     @GetMapping(path = "/{baId}")

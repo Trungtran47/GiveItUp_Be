@@ -83,7 +83,10 @@ public class PaymentController {
         try {
             String status = paymentService.getStatus(orderCode);
             emitter.send(SseEmitter.event().name("order-status").data(status));
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            // Nếu gửi thất bại ngay lúc connect (rất hiếm), xóa luôn
+            emitter.completeWithError(e);
+        }
         return emitter;
     }
 

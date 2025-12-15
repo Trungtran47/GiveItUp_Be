@@ -35,7 +35,7 @@ public class PostUpdateService {
                 .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_EXISTED));
         PayoutEntity payout = payoutRepository.findById(request.getPayoutId())
                 .orElseThrow(() -> new AppException(ErrorCode.PAYOUT_NOT_FOUND));
-        if (!post.getUser().getId().equals(userId)) {
+        if (!post.getOrganization().getId().equals(userId)) {
             throw new AppException(ErrorCode.NOT_AUTHOR);
         }
         if (request.getImagePostUpdate() != null && !request.getImagePostUpdate().isEmpty()) {
@@ -59,7 +59,7 @@ public class PostUpdateService {
                 .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_EXISTED));
         PayoutEntity payout = payoutRepository.findById(request.getPayoutId())
                 .orElseThrow(() -> new AppException(ErrorCode.PAYOUT_NOT_FOUND));
-        if (!post.getUser().getId().equals(userId)) {
+        if (!post.getOrganization().getId().equals(userId)) {
             throw new AppException(ErrorCode.NOT_AUTHOR);
         }
         if (request.getImagePostUpdate() != null && !request.getImagePostUpdate().isEmpty()) {

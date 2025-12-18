@@ -209,4 +209,8 @@ public UserResponse registerAuthor(Long userId, AuthorCreationRequest request) {
         response.setIsFollowing(isFollowing);
         return response;
     }
+    public UserResponse getUserByOrganizationId(Long organizationId) {
+     UserEntity user = userRepository.findUserEntityByOrganization_Id(organizationId);
+     return userMapper.toUserResponse(user);
+    }
 }

@@ -4,6 +4,7 @@ import com.giveitup.giveitup_be.dto.request.ApiResponse;
 import com.giveitup.giveitup_be.dto.request.CommentRequest;
 import com.giveitup.giveitup_be.dto.request.CommentResponse;
 import com.giveitup.giveitup_be.dto.response.CommentResponseForUser;
+import com.giveitup.giveitup_be.enums.ReactionType;
 import com.giveitup.giveitup_be.service.CommentService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +45,17 @@ public class CommentController {
         commentService.deleteComment(userId,commentId);
         return ApiResponse.<String>builder()
                 .result("Comment has been deleted")
+                .build();
+    }
+    // API: POST /api/comments/{id}/reaction?type=LIKE
+    @PostMapping("/{commentId}/reaction")
+    public ApiResponse<String> reactToComment(
+            @PathVariable Long commentId,
+            @RequestParam ReactionType type) {
+
+        commentService.reactToComment(commentId, type);
+        return ApiResponse.<String>builder()
+                .result("Success")
                 .build();
     }
 }

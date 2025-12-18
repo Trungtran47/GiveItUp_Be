@@ -38,6 +38,7 @@ public class DonateSummary {
                     userEntity.getOrganization().getVerificationInfoPublicId(),
                     userEntity.getOrganization().getLinkInfoOrganization(),
                     userEntity.getOrganization().getOrganizationDescription(),
+                    userEntity.getId(),
                     userEntity.getOrganization().getOrganizationApprovedAt(),
                     userEntity.getOrganization().getCreatedAt(),
                     userEntity.getOrganization().getUpdatedAt()

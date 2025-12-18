@@ -18,7 +18,7 @@ import java.util.Map;
 
 public interface PostRepository extends JpaRepository<PostEntity, Long>, JpaSpecificationExecutor<PostEntity> {
     List<PostEntity> findAllByEndDateBeforeAndStatus(LocalDateTime endDate, Long status);
-
+    List<PostEntity> findTop5ByStatusOrderByDonatedAmountDesc(Long status);
     @Query("""
     SELECT p, l.createdAt 
     FROM PostEntity p
@@ -41,6 +41,14 @@ public interface PostRepository extends JpaRepository<PostEntity, Long>, JpaSpec
             @Param("user") UserEntity user,
             Pageable pageable
     );
+    // Native Query cho SQL Server
+    // COLLATE SQL_Latin1_General_CP1_CI_AI: Giúp so sánh A = a, ả = a
+    @Query(value = """
+        SELECT * FROM posts p 
+        WHERE p.status = :status 
+        AND p.address COLLATE SQL_Latin1_General_CP1_CI_AI LIKE CONCAT('%', :keyword, '%')
+        """, nativeQuery = true)
+    List<PostEntity> searchByAddress(@Param("keyword") String keyword, @Param("status") Long status);
     // Đếm bài viết theo trạng thái
     long countByStatus(Long status);
 

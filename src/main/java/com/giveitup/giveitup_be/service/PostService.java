@@ -33,6 +33,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -51,6 +52,29 @@ public class PostService {
     DonateRepository donateRepository;
     ImageRepository imageRepository;
     OrganizationRepository organizationRepository;
+    public List<PostResponse> getTop5( ){
+        List<PostEntity> post = postRepository.findTop5ByStatusOrderByDonatedAmountDesc(PostStatus.ACTIVE.getCode());
+        return postMapper.toPostResponseList(post);
+    }
+    public List<PostMapResponse> getPostsByCity(String city) {
+        Long activeStatus = 20L;
+        List<PostEntity> posts = postRepository.searchByAddress(city, activeStatus);
+        return posts.stream().map(post -> {
+            String thumbnail = null;
+            if (post.getImages() != null && !post.getImages().isEmpty()) {
+                thumbnail = post.getImages().get(0).getImageUrl();
+            }
+            return PostMapResponse.builder()
+                    .id(post.getId())
+                    .title(post.getTitle())
+                    .address(post.getAddress())
+                    .image(thumbnail)
+                    .categoryName(post.getCategory().getCategoryName())
+                    .latitude(null)
+                    .longitude(null)
+                    .build();
+        }).collect(Collectors.toList());
+    }
     @PreAuthorize("hasRole('AUTHOR')")
     public PostResponse createPost(PostRequest request) {
         // B1. Map request sang entity

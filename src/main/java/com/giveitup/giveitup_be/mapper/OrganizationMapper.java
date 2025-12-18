@@ -9,6 +9,7 @@ import org.mapstruct.MappingTarget;
 
 @Mapper(componentModel = "spring")
 public interface OrganizationMapper {
+    @Mapping(source = "user.id",   target = "userId")
     OrganizationResponse toOrganizationResponse(OrganizationEntity entity);
     @Mapping(target = "category", ignore = true )
     @Mapping(target = "organizationLogo", ignore = true)      // bỏ map MultipartFile

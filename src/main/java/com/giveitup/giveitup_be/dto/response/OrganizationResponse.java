@@ -25,6 +25,7 @@ public class OrganizationResponse {
     String verificationInfoPublicId;
     String linkInfoOrganization;   // link thông tin group/ fb
     String organizationDescription; // mô ta tổ chức
+    Long userId;
     LocalDateTime organizationApprovedAt; // Ngày nâng cấp tổ chức
     LocalDateTime createdAt;
     LocalDateTime updatedAt;

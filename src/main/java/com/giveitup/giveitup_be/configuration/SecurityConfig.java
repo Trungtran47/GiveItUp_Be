@@ -23,7 +23,7 @@ import org.springframework.web.filter.CorsFilter;
 @EnableMethodSecurity
 public class SecurityConfig {
     private final String[] PUBLIC_ENDPOINTS = {
-        "/users", "/auth/token", "/auth/introspect", "/auth/logout", "/auth/refresh", "/posts"
+        "/users", "/auth/token", "/auth/introspect", "/auth/logout", "/auth/refresh","/posts", "/posts/top5", "/posts/map"
     };
 
     @Autowired
@@ -47,7 +47,7 @@ public class SecurityConfig {
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS).permitAll()
                         // GET /posts public
-                        .requestMatchers(HttpMethod.GET, "/posts").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/posts/top5", "/posts","/posts/map").permitAll()
                         .anyRequest().authenticated()
                 )
 

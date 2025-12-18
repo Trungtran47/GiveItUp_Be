@@ -13,7 +13,7 @@ import java.util.Optional;
 @Repository
 public interface UserRepository extends JpaRepository<UserEntity, Long>, JpaSpecificationExecutor<UserEntity> {
     boolean existsByUsername(String username);
-
+    UserEntity findUserEntityByOrganization_Id(Long id);
     Optional<UserEntity> findByUsername(String username);
     @Query("""
         SELECT u FROM UserEntity u

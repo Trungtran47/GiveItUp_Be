@@ -86,5 +86,11 @@ public class UserController {
                 .result(userService.registerAuthor(userId,request))
                 .build();
     }
+    @GetMapping("/organization/{organizationId}")
+    public ApiResponse<UserResponse> getUserByOrganizationId(@PathVariable Long organizationId) {
+        return ApiResponse.<UserResponse>builder()
+                .result(userService.getUserByOrganizationId(organizationId))
+                .build();
     }
+}
 

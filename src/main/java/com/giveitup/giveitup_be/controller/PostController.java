@@ -5,6 +5,7 @@ import com.giveitup.giveitup_be.dto.request.ApiResponse;
 import com.giveitup.giveitup_be.dto.request.PostRequest;
 import com.giveitup.giveitup_be.dto.request.SearchListPostRequest;
 import com.giveitup.giveitup_be.dto.response.PostResponse;
+import com.giveitup.giveitup_be.entity.PostMapResponse;
 import com.giveitup.giveitup_be.service.PostService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/posts")
 @RequiredArgsConstructor
@@ -20,7 +23,20 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 public class PostController {
     PostService postService;
-
+    @GetMapping("/top5")
+    public ApiResponse<List<PostResponse>> getTop5Post() {
+        List<PostResponse> result = postService.getTop5();
+        return ApiResponse.<List<PostResponse>>builder()
+                .result(result)
+                .build();
+    }
+    @GetMapping("/map")
+    public ApiResponse<List<PostMapResponse>> getPostsOnMap(@RequestParam String city) {
+        List<PostMapResponse> result = postService.getPostsByCity(city);
+        return ApiResponse.<List<PostMapResponse>>builder()
+                .result(result)
+                .build();
+    }
     @PostMapping(path = "/create", consumes = {"multipart/form-data"})
     public ApiResponse<PostResponse> createPost(@ModelAttribute PostRequest request) {
         return ApiResponse.<PostResponse>builder()

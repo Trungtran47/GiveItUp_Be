@@ -27,4 +27,8 @@ public class CommentResponse {
     private Long postId;
     private LocalDateTime createdAt;
     private List<CommentResponse> replies;  // Danh sách reply
+
+    Long likeCount;
+    Long dislikeCount;
+    String myReaction;
 }

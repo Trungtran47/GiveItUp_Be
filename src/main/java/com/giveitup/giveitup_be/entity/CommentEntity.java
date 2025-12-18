@@ -51,4 +51,19 @@ public class CommentEntity {
     @CreatedDate
     @Column(updatable = false)
     LocalDateTime createdAt;
+
+    // Thêm 2 trường này để hiển thị số lượng cho nhanh
+    @Builder.Default
+    @Column(nullable = false)
+    Long likeCount = 0L;
+
+    @Builder.Default
+    @Column(nullable = false)
+    Long dislikeCount = 0L;
+
+    // Helper method để tăng/giảm (Optional)
+    public void incrementLike() { this.likeCount++; }
+    public void decrementLike() { this.likeCount = Math.max(0, this.likeCount - 1); }
+    public void incrementDislike() { this.dislikeCount++; }
+    public void decrementDislike() { this.dislikeCount = Math.max(0, this.dislikeCount - 1); }
 }

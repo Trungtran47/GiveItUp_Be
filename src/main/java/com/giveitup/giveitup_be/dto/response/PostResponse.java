@@ -27,6 +27,7 @@ public class PostResponse {
     LocalDateTime endDate;
     Long status;
     String statusName;
+    String reason;
     BankAccountResponse bankAccount;
     OrganizationResponse organization;
     CategoryResponse category;

@@ -61,7 +61,8 @@ public class PostEntity {
     Long status;
     @Column(columnDefinition = "NVARCHAR(MAX)")
     String statusName;
-
+    @Column(columnDefinition = "NVARCHAR(MAX)")
+    private String reason; // Lưu lý do từ chối
     @ManyToOne(fetch = FetchType.LAZY)
     BankAccountEntity bankAccount;
 

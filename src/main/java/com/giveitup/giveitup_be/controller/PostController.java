@@ -3,6 +3,7 @@ package com.giveitup.giveitup_be.controller;
 import com.giveitup.giveitup_be.dto.paging.PagingResponse;
 import com.giveitup.giveitup_be.dto.request.ApiResponse;
 import com.giveitup.giveitup_be.dto.request.PostRequest;
+import com.giveitup.giveitup_be.dto.request.ReviewPostRequest;
 import com.giveitup.giveitup_be.dto.request.SearchListPostRequest;
 import com.giveitup.giveitup_be.dto.response.PostResponse;
 import com.giveitup.giveitup_be.entity.PostMapResponse;
@@ -136,6 +137,14 @@ public class PostController {
     ApiResponse<PostResponse> getPostById(@PathVariable Long postId) {
         return ApiResponse.<PostResponse>builder()
                 .result(postService.getPostById(postId))
+                .build();
+    }
+    @PutMapping("/update-status/{postId}")
+    public ApiResponse<String> reviewPost(@PathVariable Long postId,
+                                          @RequestBody ReviewPostRequest request) {
+        postService.reviewPost(postId, request);
+        return ApiResponse.<String>builder()
+                .result("Trạng thái đã được cập nhật")
                 .build();
     }
 }

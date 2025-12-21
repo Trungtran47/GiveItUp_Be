@@ -36,7 +36,7 @@ public class LikeService {
     UserRepository userRepository;
     PostMapper postMapper;
     UserService userService;
-
+    NotificationService notificationService;
     @Transactional
     public LikeResponse toggleLike(Long postId) {
         UserEntity user = userService.getMyInfoReturnEntity();
@@ -66,6 +66,32 @@ public class LikeService {
         likeRepository.save(like);
         post.setLikeCount(post.getLikeCount() + 1);
         postRepository.save(post);
+        // --- [START] GỬI THÔNG BÁO ---
+        // Chỉ gửi thông báo nếu người like KHÔNG PHẢI là chủ bài viết
+        if (!user.getId().equals(post.getOrganization().getUser().getId())) {
+
+            // 1. Xử lý tên hiển thị (Logic Organization hoặc User thường)
+            String displayName;
+            if (user.getOrganization() != null) {
+                // Thay .getOrgName() bằng getter thực tế trong OrganizationEntity của bạn
+                displayName = user.getOrganization().getOrganizationName();
+            } else {
+                String firstName = user.getFirstName() == null ? "" : user.getFirstName();
+                String lastName = user.getLastName() == null ? "" : user.getLastName();
+                displayName = (firstName + " " + lastName).trim();
+                if (displayName.isEmpty()) displayName = user.getUsername();
+            }
+
+            // 2. Gửi thông báo
+            notificationService.sendNotification(
+                    post.getOrganization().getUser(),                     // Người nhận: Chủ bài viết
+                    user,                               // Người gửi: Người vừa like
+                    displayName + " đã thích bài viết của bạn.", // Nội dung
+                    "LIKE",                             // Loại thông báo
+                    "/project/" + post.getId()          // Link tới bài viết (VD: /project/123 hoặc /post/123)
+            );
+        }
+        // --- [END] GỬI THÔNG BÁO ---
         return likeMapper.toLikeResponse(like);
 
     }

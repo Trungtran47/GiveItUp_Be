@@ -12,4 +12,10 @@ import lombok.experimental.SuperBuilder;
 public class SearchListUserRequest extends BasePagingRequest {
     String userName;
     String PhoneNumber;
+
+    // Thêm trường tìm kiếm tên tổ chức (nếu cần tách riêng)
+    private String organizationName;
+
+    // Thêm trường này để Controller quyết định lấy list USER hay AUTHOR
+    private String role; // Giá trị: "USER" hoặc "AUTHOR"
 }

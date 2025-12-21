@@ -21,6 +21,7 @@ public class FollowService {
     private final FollowRepository followRepository;
     private final UserRepository userRepository;
     private final FollowMapper followMapper;
+    private final NotificationService notificationService;
 
     // FOLLOW
     public String toggleFollow(Long followerId, Long followingId) {
@@ -39,6 +40,7 @@ public class FollowService {
             followRepository.delete(existingFollow.get());
             return "Unfollow thành công";
         }
+
         // Nếu chưa có → follow
         FollowEntity follow = FollowEntity.builder()
                 .follower(follower)
@@ -46,6 +48,26 @@ public class FollowService {
                 .build();
         followRepository.save(follow);
 
+        String displayName;
+        if (follower.getOrganization() != null) {
+            displayName = follower.getOrganization().getOrganizationName();
+        }
+        // 2. Nếu là User thường -> Lấy firstName + lastName
+        else {
+            String firstName = follower.getFirstName() == null ? "" : follower.getFirstName();
+            String lastName = follower.getLastName() == null ? "" : follower.getLastName();
+            displayName = (firstName + " " + lastName).trim();
+            if (displayName.isEmpty()) {
+                displayName = follower.getUsername();
+            }
+        }
+        notificationService.sendNotification(
+                following,                          // Người nhận (người được follow)
+                follower,                           // Người gửi (người đi follow)
+                displayName + " đã theo dõi bạn.",  // Nội dung message đã xử lý tên
+                "FOLLOW",                           // Loại thông báo
+                "/u/" + follower.getId()      // Link dẫn tới trang cá nhân người đó
+        );
         return "Follow thành công";
     }
 

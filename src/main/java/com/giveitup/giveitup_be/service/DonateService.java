@@ -37,6 +37,7 @@ public class DonateService {
     PostRepository postRepository;
     UserRepository userRepository;
     DonateMapper  donateMapper;
+    NotificationService notificationService;
 //    @PreAuthorize("hasRole('ADMIN') or hasRole('ADMIN')")
     public DonateResponse createDonate(DonateRequest request){
         DonateEntity donateEntity = donateMapper.toDonate(request);
@@ -50,9 +51,43 @@ public class DonateService {
         DonateEntity savedDonate = donateRepository.save(donateEntity);
         // Tính tổng donate của bài post
         Double totalAmount = donateRepository.sumAmountByPostId(postEntity.getId());
+        // --- [1] LOGIC THÔNG BÁO DONATE ---
+        // Chỉ gửi nếu người donate KHÔNG PHẢI là chủ dự án (tránh spam tự donate)
+        if (!userEntity.getId().equals(postEntity.getOrganization().getUser().getId())) {
+            // Xử lý tên hiển thị người donate
+            String displayName;
+            if (userEntity.getOrganization() != null) {
+                displayName = userEntity.getOrganization().getOrganizationName();
+            } else {
+                String firstName = userEntity.getFirstName() == null ? "" : userEntity.getFirstName();
+                String lastName = userEntity.getLastName() == null ? "" : userEntity.getLastName();
+                displayName = (firstName + " " + lastName).trim();
+                if (displayName.isEmpty()) displayName = userEntity.getUsername();
+            }
+
+            // Format số tiền (VD: 50000 -> 50,000) - Tùy chọn, hoặc để raw
+            // String formattedAmount = String.format("%,.0f", savedDonate.getAmount());
+
+            notificationService.sendNotification(
+                    postEntity.getOrganization().getUser(), // Người nhận: Chủ dự án
+                    userEntity,           // Người gửi: Người donate
+                    displayName + " đã ủng hộ " + savedDonate.getAmount() + " cho dự án của bạn.", // Message
+                    "DONATE",             // Type
+                    "/project/" + postEntity.getId() // Link
+            );
+        }
         if (totalAmount >= postEntity.getTargetAmount()){
             postEntity.setStatus(PostStatus.COMPlETE.getCode());
             postEntity.setStatusName(PostStatus.COMPlETE.getLabel());
+            // --- [2] LOGIC THÔNG BÁO HOÀN THÀNH MỤC TIÊU ---
+            // Gửi thông báo hệ thống chúc mừng chủ dự án
+            notificationService.sendNotification(
+                    postEntity.getOrganization().getUser(),
+                    null, // Sender là null (Hệ thống)
+                    "Chúc mừng! Dự án '" + postEntity.getTitle() + "' đã đạt đủ mục tiêu quyên góp.",
+                    "SYSTEM",
+                    "/project/" + postEntity.getId()
+            );
         }
         postEntity.setDonatedAmount(totalAmount);
         postRepository.save(postEntity);

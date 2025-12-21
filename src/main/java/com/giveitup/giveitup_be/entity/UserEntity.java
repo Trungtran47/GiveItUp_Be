@@ -86,4 +86,15 @@ public class UserEntity {
     @OneToMany(mappedBy = "following", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<FollowEntity> followers = new ArrayList<>();
 
+    // 1. Danh sách thông báo mà User này NHẬN ĐƯỢC (Quan trọng để hiển thị list thông báo)
+    // mappedBy = "recipient" phải trùng tên với field "recipient" bên NotificationEntity
+    @OneToMany(mappedBy = "recipient", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude // Tránh lỗi vòng lặp khi log
+    private List<NotificationEntity> notifications = new ArrayList<>();
+
+    // 2. (Tùy chọn) Danh sách thông báo mà User này LÀ NGƯỜI GÂY RA (VD: User này đi like dạo)
+    // Thường ít dùng để hiển thị, nhưng cần thiết nếu muốn xóa User thì xóa luôn các noti do user này tạo ra
+    @OneToMany(mappedBy = "sender", cascade = CascadeType.ALL)
+    @ToString.Exclude
+    private List<NotificationEntity> sentNotifications = new ArrayList<>();
 }

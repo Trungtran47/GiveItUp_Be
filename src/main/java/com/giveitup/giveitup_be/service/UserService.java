@@ -34,8 +34,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -50,14 +52,25 @@ public class UserService {
     CategoryRepository categoryRepository;
     FollowRepository  followRepository;
     OrganizationMapper organizationMapper;
+    OrganizationRepository organizationRepository;
+    NotificationService notificationService;
 //
 @Transactional
 public UserResponse registerAuthor(Long userId, AuthorCreationRequest request) {
     UserEntity userEntity = userRepository.findById(userId)
             .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-    CategoryEntity categoryEntity = categoryRepository.findById(request.getCategory()).orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_EXISTED));
+    CategoryEntity categoryEntity = categoryRepository.findById(request.getCategory())
+            .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_EXISTED));
+    OrganizationEntity organization = userEntity.getOrganization();
 
-    OrganizationEntity organization = new OrganizationEntity();
+    if (organization == null) {
+        // Trường hợp chưa có: Tạo mới
+        organization = new OrganizationEntity();
+        organization.setUser(userEntity); // Set link user ngay
+        if (request.getStatus() == null) {
+            userEntity.setStatus(UserStatus.PENDING.getCode());
+        }
+    }
 
     if (request.getOrganizationLogo() != null && !request.getOrganizationLogo().isEmpty()) {
         Map<String, String> uploadResult = cloudinaryService.uploadImage(
@@ -93,7 +106,7 @@ public UserResponse registerAuthor(Long userId, AuthorCreationRequest request) {
 
 //    organization.setOrganizationCreatedAt(LocalDateTime.now());
     organization.setCategory(categoryEntity);
-    organization.setUser(userEntity); // link 2 chiều
+//    organization.setUser(userEntity); // link 2 chiều
     userEntity.setOrganization(organization);
 
     return userMapper.toUserResponse(userRepository.save(userEntity));
@@ -173,28 +186,59 @@ public UserResponse registerAuthor(Long userId, AuthorCreationRequest request) {
     public void deleteUser(Long userId) {
         userRepository.deleteById(userId);
     }
-
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    public UserResponse updateStatus(Long userId, Long status) {
+         UserEntity user = userRepository.findById(userId).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+         user.setStatus(status);
+        if (Objects.equals(status, (long) UserStatus.REJECTED.getCode())) { // Cast long cho chắc chắn
+            notificationService.sendNotification(
+                    user,
+                    null,
+                    "Yêu cầu tạo tài khoản tổ chức từ thiện của bạn bị từ chối",
+                    "SYSTEM",
+                    "/profile/user_info"
+            );
+        }
+         if(Objects.equals(status, UserStatus.AUTHOR.getCode())){
+             var role = roleRepository.findById("AUTHOR")
+                     .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
+             user.setRole(role);
+             notificationService.sendNotification(
+                     user,
+                     null,
+                     "Chúc mừng! Tài khoản của bạn đã được nâng cấp lên Tác giả.",
+                     "SYSTEM",
+                     "/profile/dashboard"
+             );
+         }
+       return userMapper.toUserResponse(userRepository.save(user));
+    }
     @PreAuthorize("hasRole('ADMIN')")
     public Page<UserResponse> getUsers(SearchListUserRequest request) {
-        Specification<UserEntity> spec = Specification.allOf(
-                UserSpecification.hasUsername(request.getUserName()),
-                UserSpecification.hasPhoneNumber(request.getPhoneNumber()),
-                (root, query, cb) -> cb.notEqual(root.get("role").get("name"), "ADMIN")
-        );
+        List<Specification<UserEntity>> specs = new ArrayList<>();
+        specs.add(UserSpecification.hasUsername(request.getUserName()));
+        specs.add(UserSpecification.hasPhoneNumber(request.getPhoneNumber()));
+
+        if (request.getRole() != null && !request.getRole().isEmpty()) {
+            specs.add(UserSpecification.hasRole(request.getRole()));
+            if ("AUTHOR".equalsIgnoreCase(request.getRole())) {
+                specs.add(UserSpecification.hasOrganizationName(request.getOrganizationName()));
+            }
+        } else {
+            specs.add((root, query, cb) -> cb.notEqual(root.get("role").get("name"), "ADMIN"));
+        }
+        Specification<UserEntity> finalSpec = Specification.allOf(specs);
         int pageIndex = Math.max(request.getCurrentPage() - 1, 0);
         Pageable pageable = PageRequest.of(
                 pageIndex,
                 request.getPageSize(),
-                Sort.by("username").ascending()
+                Sort.by("createdAt").descending()
         );
-
-        Page<UserEntity> page = userRepository.findAll(spec, pageable);
-        log.info("Found {} users", page.getTotalElements());
+        Page<UserEntity> page = userRepository.findAll(finalSpec, pageable);
+        log.info("Found {} users with role {}", page.getTotalElements(), request.getRole());
 
         return page.map(userMapper::toUserResponse);
-
     }
-
 //    @PreAuthorize("hasRole('ADMIN')")
     public UserResponse getUser(Long id) {
         UserEntity user = userRepository.findById(id)

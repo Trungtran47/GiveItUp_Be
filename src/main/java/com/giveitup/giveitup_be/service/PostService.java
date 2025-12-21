@@ -1,6 +1,7 @@
 package com.giveitup.giveitup_be.service;
 
 import com.giveitup.giveitup_be.dto.request.PostRequest;
+import com.giveitup.giveitup_be.dto.request.ReviewPostRequest;
 import com.giveitup.giveitup_be.dto.request.SearchListPostRequest;
 import com.giveitup.giveitup_be.dto.response.PayoutResponse;
 import com.giveitup.giveitup_be.dto.response.PostResponse;
@@ -51,7 +52,9 @@ public class PostService {
     PostUpdateMapper postUpdateMapper;
     DonateRepository donateRepository;
     ImageRepository imageRepository;
+    NotificationService notificationService;
     OrganizationRepository organizationRepository;
+    private final UserService userService;
     public List<PostResponse> getTop5( ){
         List<PostEntity> post = postRepository.findTop5ByStatusOrderByDonatedAmountDesc(PostStatus.ACTIVE.getCode());
         return postMapper.toPostResponseList(post);
@@ -94,9 +97,9 @@ public class PostService {
             postEntity.setDonatedAmount(0.0);
             postEntity.setLikeCount(0L);    // bắt buộc
             postEntity.setViewCount(0L);
-            postEntity.setStatus(PostStatus.ACTIVE.getCode());
+            postEntity.setStatus(PostStatus.PENDING.getCode());
             postEntity.setEndDate(request.getEndDate());
-            postEntity.setStatusName(PostStatus.ACTIVE.getLabel());
+            postEntity.setStatusName(PostStatus.PENDING.getLabel());
             postEntity = postRepository.save(postEntity);
             // B3. Nếu có file ảnh thì upload
             if (request.getVideo() != null && !request.getVideo().isEmpty()) {
@@ -154,10 +157,10 @@ public class PostService {
                 .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_EXISTED)));
         postEntity.setBankAccount(bankAccountRepository.findById(request.getBankAccount())
                 .orElseThrow(() -> new AppException(ErrorCode.BANK_ACCOUNT_NOT_EXISTED)));
-        if (request.getEndDate().isAfter(LocalDateTime.now())) {
-            postEntity.setStatus(PostStatus.ACTIVE.getCode());
-            postEntity.setStatusName(PostStatus.ACTIVE.getLabel());
-        }
+//        if (request.getEndDate().isAfter(LocalDateTime.now())) {
+//            postEntity.setStatus(PostStatus.ACTIVE.getCode());
+//            postEntity.setStatusName(PostStatus.ACTIVE.getLabel());
+//        }
 
         // ==== B2. XỬ LÝ VIDEO ====
         MultipartFile newVideoFile = request.getVideo();
@@ -395,6 +398,99 @@ public class PostService {
 
         Page<PostEntity> page = postRepository.findAll(spec, pageable);
         return page.map(postMapper::toPostResponse);
+    }
+
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
+    public void reviewPost(Long postId, ReviewPostRequest request) {
+        // 1. Tìm bài viết
+        PostEntity post = postRepository.findById(postId)
+                .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_EXISTED));
+
+        Long currentStatus = post.getStatus();
+        PostStatus targetStatus;
+
+        try {
+            targetStatus = PostStatus.fromCode(request.getStatus());
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Trạng thái đích không hợp lệ.");
+        }
+
+        // 2. Validate Luồng trạng thái (State Transition)
+        if (targetStatus == PostStatus.ACTIVE) {
+            // Chỉ được duyệt khi đang Chờ, hoặc khôi phục khi bị Chặn/Từ chối
+            if (!currentStatus.equals(PostStatus.PENDING.getCode()) &&
+                    !currentStatus.equals(PostStatus.REJECTED.getCode()) &&
+                    !currentStatus.equals(PostStatus.BLOCKED.getCode())) {
+                throw new RuntimeException("Bài viết này không ở trạng thái có thể Duyệt/Khôi phục.");
+            }
+        }
+        else if (targetStatus == PostStatus.REJECTED) {
+            // Chỉ được Từ chối khi đang Chờ duyệt
+            if (!currentStatus.equals(PostStatus.PENDING.getCode())) {
+                throw new RuntimeException("Chỉ có thể TỪ CHỐI bài viết đang chờ duyệt.");
+            }
+        }
+        else if (targetStatus == PostStatus.BLOCKED) {
+            // Chỉ được Chặn khi đang Hoạt động
+            if (!currentStatus.equals(PostStatus.ACTIVE.getCode())) {
+                throw new RuntimeException("Chỉ có thể CHẶN bài viết đang hoạt động.");
+            }
+        }
+        else {
+            throw new RuntimeException("Hành động không hợp lệ.");
+        }
+
+        // 3. Xử lý Lý do (Reason) cho cả REJECTED (90) và BLOCKED (91)
+        if (targetStatus == PostStatus.REJECTED || targetStatus == PostStatus.BLOCKED) {
+            if (request.getReason() == null || request.getReason().trim().isEmpty()) {
+                throw new RuntimeException("Vui lòng nhập lý do " + targetStatus.getLabel());
+            }
+            post.setReason(request.getReason());
+        } else {
+            // Nếu duyệt lại thì xóa lý do cũ
+            post.setReason(null);
+        }
+
+        // 4. Cập nhật
+        post.setStatus(targetStatus.getCode());
+        post.setStatusName(targetStatus.getLabel());
+        postRepository.save(post);
+        // ========================================================================
+        // 5. GỬI THÔNG BÁO (LOGIC MỚI THÊM)
+        // ========================================================================
+        try {
+            // A. Lấy thông tin Admin đang thực hiện (Người gửi)
+            UserEntity adminSender = userService.getMyInfoReturnEntity();
+            // B. Chuẩn bị nội dung thông báo dựa trên trạng thái
+            String message = "";
+            String notiType = "";
+
+            if (targetStatus == PostStatus.ACTIVE) {
+                message = "Bài viết '" + post.getTitle() + "' của bạn đã được duyệt và đang hiển thị công khai.";
+                notiType = "POST_APPROVED";
+            } else if (targetStatus == PostStatus.REJECTED) {
+                message = "Bài viết '" + post.getTitle() + "' đã bị từ chối duyệt. Lý do: " + request.getReason();
+                notiType = "POST_REJECTED";
+            } else if (targetStatus == PostStatus.BLOCKED) {
+                message = "Bài viết '" + post.getTitle() + "' đã bị chặn do vi phạm. Lý do: " + request.getReason();
+                notiType = "POST_BLOCKED";
+            }
+
+            // C. Gửi thông báo
+            if (!message.isEmpty()) {
+                notificationService.sendNotification(
+                        post.getOrganization().getUser(),      // Người nhận: Chủ bài viết (Lấy từ PostEntity)
+                        adminSender,         // Người gửi: Admin
+                        message,             // Nội dung
+                        notiType,            // Loại thông báo
+                        "/project/" + post.getId() // Link dẫn đến bài viết (Frontend handle route này)
+                );
+            }
+        } catch (Exception e) {
+            // Log lỗi nhưng không chặn transaction chính (để việc duyệt bài vẫn thành công dù gửi noti lỗi)
+            System.err.println("Lỗi gửi thông báo duyệt bài: " + e.getMessage());
+        }
     }
     // Chạy lúc 00:00 hằng ngày
     @Scheduled(cron = "0 0 0 * * *")

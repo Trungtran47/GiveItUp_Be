@@ -17,7 +17,7 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
         nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE
         , uses = {UserMapper.class, RoleMapper.class})
 public interface UserMapper {
-    @Mapping(source = "role", target = "role.name")
+//    @Mapping(source = "role", target = "role.name")
     UserEntity toUser(UserCreationRequest request);
 //    UserEntity toAuthor(AuthorCreationRequest request);
     @Mapping(source = "role.name", target = "role")

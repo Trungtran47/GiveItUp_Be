@@ -1,4 +1,4 @@
-package com.giveitup.giveitup_be.entity;
+package com.giveitup.giveitup_be.dto.response;
 
 import lombok.*;
 

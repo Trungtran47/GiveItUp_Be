@@ -6,7 +6,7 @@ import com.giveitup.giveitup_be.dto.request.PostRequest;
 import com.giveitup.giveitup_be.dto.request.ReviewPostRequest;
 import com.giveitup.giveitup_be.dto.request.SearchListPostRequest;
 import com.giveitup.giveitup_be.dto.response.PostResponse;
-import com.giveitup.giveitup_be.entity.PostMapResponse;
+import com.giveitup.giveitup_be.dto.response.PostMapResponse;
 import com.giveitup.giveitup_be.service.PostService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -58,9 +58,9 @@ public class PostController {
                 .result("Post has been deleted")
                 .build();
     }
-    @GetMapping("/organization/{OrganizationId}")
-    ApiResponse<PagingResponse<PostResponse>> getPostByOrganizationId(@PathVariable Long OrganizationId, SearchListPostRequest request) {
-        Page<PostResponse> page = postService.getPostByOrganizationId(OrganizationId,request);
+    @GetMapping("/organization/{organizationId}")
+    ApiResponse<PagingResponse<PostResponse>> getPostByOrganizationId(@PathVariable Long organizationId, SearchListPostRequest request) {
+        Page<PostResponse> page = postService.getPostByOrganizationId(organizationId,request);
         PagingResponse.PagingInfo paging = PagingResponse.PagingInfo.builder()
                 .CurrentPage(request.getCurrentPage())
                 .NumberOfRecord(request.getPageSize())

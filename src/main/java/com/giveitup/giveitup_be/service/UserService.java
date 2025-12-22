@@ -100,8 +100,6 @@ public UserResponse registerAuthor(Long userId, AuthorCreationRequest request) {
     organizationMapper.updateAuthor(organization, request);
     if(request.getStatus() != null ){
         userEntity.setStatus(request.getStatus());
-    }else {
-        userEntity.setStatus(UserStatus.PENDING.getCode());
     }
 
 //    organization.setOrganizationCreatedAt(LocalDateTime.now());
@@ -129,7 +127,7 @@ public UserResponse registerAuthor(Long userId, AuthorCreationRequest request) {
 //        roleRepository.findById(PredefinedRole.USER_ROLE).ifPresent(roleEntities::add);
 //
 //        userEntity.setRoleEntities(roleEntities);
-        RoleEntity roleEntity =  roleRepository.findById(request.getRole()).orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
+        RoleEntity roleEntity =  roleRepository.findById("USER").orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
         userEntity.setRole(roleEntity);
 
         try {

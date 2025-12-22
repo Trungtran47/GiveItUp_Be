@@ -29,7 +29,7 @@ public class UserCreationRequest {
     @Size(max = 10, message = "INVALID_PHONE_NUMBER")
     String phoneNumber;
     Long gender;
-    String role;
+//    String role;
 
     @DobConstraint(min = 10, message = "INVALID_DOB")
     LocalDate dob;

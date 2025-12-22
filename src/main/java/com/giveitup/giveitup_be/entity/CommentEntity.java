@@ -44,7 +44,7 @@ public class CommentEntity {
     CommentEntity parentComment;
 
     // Danh sách reply
-    @OneToMany(mappedBy = "parentComment", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "parentComment", cascade = CascadeType.ALL, orphanRemoval = true)
     List<CommentEntity> replies;
 
     // Thời gian tạo

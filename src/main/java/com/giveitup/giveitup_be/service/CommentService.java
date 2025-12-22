@@ -36,7 +36,7 @@ public class CommentService {
     private final RoleRepository roleRepository;
     private final CommentMapper commentMapper;
     private final CommentReactionRepository reactionRepository;
-
+    private final NotificationService notificationService;
     @Transactional
     public CommentResponse createComment(Long userId, CommentRequest request) {
         UserEntity user = userRepository.findById(userId)
@@ -49,13 +49,32 @@ public class CommentService {
         comment.setUser(user);
         comment.setPost(post);
 
+        UserEntity recipient = null; // Người nhận thông báo
+        String notiMessage = "";
+        String notiType = "";
+        String senderName = getUserDisplayName(user);
         if (request.getParentCommentId() != null) {
             CommentEntity parent = commentRepository.findById(request.getParentCommentId())
                     .orElseThrow(() -> new AppException(ErrorCode.PARENT_COMMENT_NOT_FOUND));
             comment.setParentComment(parent);
+            // Nếu là Reply -> Báo cho người bình luận gốc (Parent Comment Owner)
+            recipient = parent.getUser();
+            notiMessage = senderName + " đã trả lời bình luận của bạn.";
+            notiType = "REPLY_COMMENT";
+        }else {
+            // Nếu là Comment gốc -> Báo cho chủ bài viết (Post Owner)
+            recipient = post.getOrganization().getUser();
+            notiMessage = senderName + " đã bình luận về bài viết của bạn.";
+            notiType = "COMMENT_POST";
         }
 
         CommentEntity saved = commentRepository.save(comment);
+        // 2. GỬI THÔNG BÁO (Kiểm tra null và không tự gửi cho chính mình)
+        if (recipient != null && !recipient.getId().equals(userId)) {
+            // Link dẫn tới bài viết chi tiết
+            String link = "/post/" + post.getId();
+            notificationService.sendNotification(recipient, user, notiMessage, notiType, link);
+        }
         return mapToResponse(saved);
     }
 
@@ -91,19 +110,16 @@ public List<CommentResponse> getCommentsByPost(Long postId) {
                 .id(entity.getId())
                 .content(entity.getContent())
                 .userId(entity.getUser().getId())
-                .userName(entity.getUser().getLastName() + " " + entity.getUser().getFirstName()) // Ví dụ
-                .avatar(entity.getUser().getImageUser())
+                .userName(getUserDisplayName(entity.getUser())) //  Dùng hàm helper
+                .avatar(getUserAvatar(entity.getUser())) // Truyền biến đã xử lý ở trên
                 .postId(entity.getPost().getId())
                 .createdAt(entity.getCreatedAt())
-                // Set Like/Dislike count từ Entity
                 .likeCount(entity.getLikeCount())
                 .dislikeCount(entity.getDislikeCount())
-                // Set myReaction: Lấy từ Map truyền vào (O(1) lookup)
                 .myReaction(reactionMap.get(entity.getId()))
-                // Đệ quy cho replies (cũng cần truyền reactionMap xuống con)
                 .replies(entity.getReplies() == null ? new ArrayList<>() :
                         entity.getReplies().stream()
-                                .map(reply -> mapToResponse(reply, reactionMap)) // Truyền tiếp map xuống
+                                .map(reply -> mapToResponse(reply, reactionMap))
                                 .collect(Collectors.toList()))
                 .build();
     }
@@ -128,13 +144,10 @@ public List<CommentResponse> getCommentsByPost(Long postId) {
         response.setId(comment.getId());
         response.setContent(comment.getContent());
         response.setUserId(comment.getUser().getId());
-        if (comment.getUser().getRole() != null &&
-                comment.getUser().getRole().getName().equals(roleAuthor.getName())) {
-            response.setAvatar(comment.getUser().getOrganization().getOrganizationLogo());
-        } else {
-            response.setAvatar(comment.getUser().getImageUser());
-        }
-        response.setUserName(comment.getUser().getFirstName() + " " + comment.getUser().getLastName());
+        //  Dùng hàm helper cho gọn
+        response.setUserName(getUserDisplayName(comment.getUser()));
+        response.setAvatar(getUserAvatar(comment.getUser()));
+
         response.setPostId(comment.getPost().getId());
         response.setCreatedAt(comment.getCreatedAt());
         if (comment.getReplies() != null) {
@@ -151,7 +164,7 @@ public List<CommentResponse> getCommentsByPost(Long postId) {
         // 1. Kiểm tra xem user đã tương tác với comment này chưa
         Optional<CommentReactionEntity> existingReactionOpt =
                 reactionRepository.findByUserIdAndCommentId(user.getId(), commentId);
-
+        boolean isNewLike = false; // Cờ đánh dấu để gửi thông báo
         if (existingReactionOpt.isPresent()) {
             CommentReactionEntity existingReaction = existingReactionOpt.get();
 
@@ -170,6 +183,7 @@ public List<CommentResponse> getCommentsByPost(Long postId) {
                 if (newType == ReactionType.LIKE) {
                     comment.incrementLike();
                     comment.decrementDislike();
+                    isNewLike = true; // Chuyển từ Dislike sang Like cũng tính là like mới
                 } else {
                     comment.incrementDislike();
                     comment.decrementLike();
@@ -184,9 +198,44 @@ public List<CommentResponse> getCommentsByPost(Long postId) {
                     .build();
             reactionRepository.save(newReaction);
 
-            if (newType == ReactionType.LIKE) comment.incrementLike();
+            if (newType == ReactionType.LIKE) {
+                comment.incrementLike();
+                isNewLike = true; // Like mới tinh
+            }
             else comment.incrementDislike();
         }
         commentRepository.save(comment);
+        // 3. GỬI THÔNG BÁO KHI CÓ LIKE (Chỉ gửi Like, Dislike thường không gửi để tránh toxic)
+        if (isNewLike) {
+            UserEntity recipient = comment.getUser();
+            // Không gửi thông báo nếu tự like comment của mình
+            if (!recipient.getId().equals(user.getId())) {
+                //  Lấy tên người like (xử lý logic Author/User)
+                String senderName = getUserDisplayName(user);
+                String message = senderName + " đã thích bình luận của bạn.";
+                String link = "/post/" + comment.getPost().getId();
+                notificationService.sendNotification(recipient, user, message, "LIKE_COMMENT", link);
+            }
+        }
+    }
+    // --- HÀM HELPER: LẤY TÊN HIỂN THỊ (USER hoặc ORGANIZATION) ---
+    private String getUserDisplayName(UserEntity user) {
+        // Giả sử ID role AUTHOR là "AUTHOR" như trong code cũ của bạn
+        if (user.getRole() != null && "AUTHOR".equals(user.getRole().getName())) {
+            if (user.getOrganization() != null) {
+                return user.getOrganization().getOrganizationName();
+            }
+        }
+        return user.getLastName() + " " + user.getFirstName();
+    }
+
+    // --- HÀM HELPER: LẤY AVATAR (USER hoặc ORGANIZATION) ---
+    private String getUserAvatar(UserEntity user) {
+        if (user.getRole() != null && "AUTHOR".equals(user.getRole().getName())) {
+            if (user.getOrganization() != null) {
+                return user.getOrganization().getOrganizationLogo();
+            }
+        }
+        return user.getImageUser();
     }
 }

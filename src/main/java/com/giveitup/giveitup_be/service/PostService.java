@@ -4,6 +4,7 @@ import com.giveitup.giveitup_be.dto.request.PostRequest;
 import com.giveitup.giveitup_be.dto.request.ReviewPostRequest;
 import com.giveitup.giveitup_be.dto.request.SearchListPostRequest;
 import com.giveitup.giveitup_be.dto.response.PayoutResponse;
+import com.giveitup.giveitup_be.dto.response.PostMapResponse;
 import com.giveitup.giveitup_be.dto.response.PostResponse;
 import com.giveitup.giveitup_be.entity.*;
 import com.giveitup.giveitup_be.enums.PayoutStatus;
@@ -287,7 +288,7 @@ public class PostService {
         Pageable pageable = PageRequest.of(
                 pageIndex,
                 request.getPageSize(),
-                Sort.by("title").ascending()
+                Sort.by("createdAt").descending()
         );
 
         Page<PostEntity> page = postRepository.findAll(spec, pageable);
@@ -361,7 +362,8 @@ public class PostService {
         int pageIndex = Math.max(request.getCurrentPage() - 1, 0);
         Pageable pageable = PageRequest.of(
                 pageIndex,
-                request.getPageSize()
+                request.getPageSize(),
+                Sort.by("createdAt").descending()
         );
 
         Page<PostEntity> page = postRepository.findAll(spec, pageable);

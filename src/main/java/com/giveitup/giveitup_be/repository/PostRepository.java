@@ -19,6 +19,25 @@ import java.util.Map;
 public interface PostRepository extends JpaRepository<PostEntity, Long>, JpaSpecificationExecutor<PostEntity> {
     List<PostEntity> findAllByEndDateBeforeAndStatus(LocalDateTime endDate, Long status);
     List<PostEntity> findTop5ByStatusOrderByDonatedAmountDesc(Long status);
+
+    // Cú pháp SQL Server: TOP (:limit) ... ORDER BY NEWID()
+    @Query(value = "SELECT TOP (:limit) * FROM posts " +
+            "WHERE category_id = :categoryId " +
+            "AND id != :excludedPostId " +
+            "AND status = :status " +
+            "ORDER BY NEWID()", nativeQuery = true)
+    List<PostEntity> findRandomByCategoryAndIdNot(@Param("categoryId") Long categoryId,
+                                                  @Param("excludedPostId") Long excludedPostId,
+                                                  @Param("status") Long status,
+                                                  @Param("limit") int limit);
+    // 2. Lấy random tất cả (Fallback), loại trừ danh sách ID đã lấy
+    @Query(value = "SELECT TOP (:limit) * FROM posts " +
+            "WHERE id NOT IN (:excludedIds) " +
+            "AND status = :status " +
+            "ORDER BY NEWID()", nativeQuery = true)
+    List<PostEntity> findRandomByIdNotIn(@Param("excludedIds") List<Long> excludedIds,
+                                         @Param("status") Long status,
+                                         @Param("limit") int limit);
     @Query("""
     SELECT p, l.createdAt 
     FROM PostEntity p

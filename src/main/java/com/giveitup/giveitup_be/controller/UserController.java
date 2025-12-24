@@ -20,7 +20,23 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 public class UserController {
     UserService userService;
-
+//    // API 1: Người dùng nhập email/username để lấy mã
+//    @PostMapping("/forgot-password")
+//    public ApiResponse<String> forgotPassword(@RequestBody ForgotPasswordRequest request) {
+//        userService.forgotPassword(request.getIdentification());
+//        return ApiResponse.<String>builder()
+//                .result("Mã OTP đã được gửi đến email của bạn.")
+//                .build();
+//    }
+//
+//    // API 2: Người dùng nhập OTP và mật khẩu mới để đổi
+//    @PostMapping("/reset-password")
+//    public ApiResponse<String> resetPassword(@RequestBody ResetPasswordRequest request) {
+//        userService.resetPassword(request);
+//        return ApiResponse.<String>builder()
+//                .result("Đặt lại mật khẩu thành công.")
+//                .build();
+//    }
     @PostMapping
     ApiResponse<UserResponse> createUser(@Valid @RequestBody UserCreationRequest request) {
         return ApiResponse.<UserResponse>builder()

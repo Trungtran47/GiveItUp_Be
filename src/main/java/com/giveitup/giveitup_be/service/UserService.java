@@ -113,6 +113,13 @@ public UserResponse registerAuthor(Long userId, AuthorCreationRequest request) {
 
 
     public UserResponse createUser(UserCreationRequest request) {
+
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new AppException(ErrorCode.EMAIL_EXISTED);
+        }
+        if (userRepository.existsByPhoneNumber(request.getPhoneNumber())) {
+            throw new AppException(ErrorCode.PHONE_EXISTED);
+        }
         UserEntity userEntity = userMapper.toUser(request);
         userEntity.setPassword(passwordEncoder.encode(request.getPassword()));
         userEntity.setDob(request.getDob());

@@ -147,4 +147,16 @@ public class PostController {
                 .result("Trạng thái đã được cập nhật")
                 .build();
     }
+    @GetMapping("/{id}/related")
+    public ApiResponse<List<PostResponse>> getRelatedPosts(@PathVariable Long id) {
+        // 1. Lấy thông tin bài viết hiện tại để biết categoryId
+        PostResponse currentPost = postService.getPostById(id);
+
+        // 2. Gọi hàm recommend
+        List<PostResponse> related = postService.getRelatedPosts(currentPost.getCategory().getId(), id);
+
+        return ApiResponse.<List<PostResponse>>builder()
+                .result(related)
+                .build();
+    }
 }

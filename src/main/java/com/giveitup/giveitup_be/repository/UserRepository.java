@@ -15,6 +15,9 @@ public interface UserRepository extends JpaRepository<UserEntity, Long>, JpaSpec
     boolean existsByUsername(String username);
     UserEntity findUserEntityByOrganization_Id(Long id);
     Optional<UserEntity> findByUsername(String username);
+    Optional<UserEntity> findByUsernameOrEmail(String username, String email);
+    boolean existsByEmail(String email);
+    boolean existsByPhoneNumber(String phoneNumber);
     @Query("""
         SELECT u FROM UserEntity u
         WHERE u.status = 30

@@ -8,7 +8,7 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class DonateRequest {
+public class  DonateRequest {
     Long paymentCode;
     Double amount;
 //    boolean isShow;

@@ -1,7 +1,6 @@
 package com.giveitup.giveitup_be.service;
 
 import com.giveitup.giveitup_be.dto.paging.BasePagingRequest;
-import com.giveitup.giveitup_be.dto.request.PostViewRequest;
 import com.giveitup.giveitup_be.dto.response.PostResponse;
 import com.giveitup.giveitup_be.entity.PostEntity;
 import com.giveitup.giveitup_be.entity.PostViewEntity;
@@ -20,6 +19,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
@@ -32,11 +32,11 @@ public class PostViewService {
     PostRepository postRepository;
     UserRepository userRepository;
     PostMapper postMapper;
-    public void addView( Long userId,PostEntity post) {
+    @Transactional // Quan trọng: Đảm bảo tính nhất quán dữ liệu khi update 2 bảng
+    public void addView(Long userId, PostEntity post) {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-        // Kiểm tra xem user đã có record PostView chưa
-        PostViewEntity postView = postViewRepository.findByPostIdAndUserId(post.getId(), userId)
+        PostViewEntity postView = postViewRepository.findFirstByPostIdAndUserId(post.getId(), userId)
                 .orElseGet(() -> {
                     PostViewEntity newView = new PostViewEntity();
                     newView.setPost(post);
@@ -51,10 +51,6 @@ public class PostViewService {
         post.setViewCount(post.getViewCount() + 1);
         postRepository.save(post);
     }
-//    public void deleteView( Long postViewId) {
-//        postViewRepository.deleteById(postViewId);
-//    }
-//    public voide deleteAll
     public Page<PostResponse> getPostsViewByUserId(Long userId, BasePagingRequest request) {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));

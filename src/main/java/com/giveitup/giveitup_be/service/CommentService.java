@@ -48,32 +48,55 @@ public class CommentService {
         comment.setContent(request.getContent());
         comment.setUser(user);
         comment.setPost(post);
-
-        UserEntity recipient = null; // Người nhận thông báo
-        String notiMessage = "";
-        String notiType = "";
-        String senderName = getUserDisplayName(user);
         if (request.getParentCommentId() != null) {
             CommentEntity parent = commentRepository.findById(request.getParentCommentId())
                     .orElseThrow(() -> new AppException(ErrorCode.PARENT_COMMENT_NOT_FOUND));
             comment.setParentComment(parent);
-            // Nếu là Reply -> Báo cho người bình luận gốc (Parent Comment Owner)
-            recipient = parent.getUser();
-            notiMessage = senderName + " đã trả lời bình luận của bạn.";
-            notiType = "REPLY_COMMENT";
-        }else {
-            // Nếu là Comment gốc -> Báo cho chủ bài viết (Post Owner)
-            recipient = post.getOrganization().getUser();
-            notiMessage = senderName + " đã bình luận về bài viết của bạn.";
-            notiType = "COMMENT_POST";
-        }
 
+        }
         CommentEntity saved = commentRepository.save(comment);
-        // 2. GỬI THÔNG BÁO (Kiểm tra null và không tự gửi cho chính mình)
-        if (recipient != null && !recipient.getId().equals(userId)) {
-            // Link dẫn tới bài viết chi tiết
-            String link = "/post/" + post.getId();
-            notificationService.sendNotification(recipient, user, notiMessage, notiType, link);
+        // 3. GỬI THÔNG BÁO (Trong khối try-catch để không ảnh hưởng luồng chính)
+        try {
+            UserEntity sender = user;
+            String senderName = getUserDisplayName(sender);
+            String link = "/project/" + post.getId();
+
+            // Logic xác định người nhận
+            if (request.getParentCommentId() != null) {
+                // A. Trường hợp Reply: Gửi cho người mình đang trả lời
+                // Lưu ý: Lấy parent từ biến comment vừa set ở trên
+                CommentEntity parent = comment.getParentComment();
+                UserEntity parentOwner = parent.getUser();
+
+                // Chỉ gửi nếu người trả lời KHÁC người tạo comment gốc (tránh tự kỷ)
+                if (!parentOwner.getId().equals(sender.getId())) {
+                    notificationService.sendNotification(
+                            parentOwner,
+                            sender,
+                            senderName + " đã trả lời bình luận của bạn.",
+                            "REPLY_COMMENT",
+                            link
+                    );
+                }
+            } else {
+                // B. Trường hợp Comment bài viết: Gửi cho chủ bài viết
+                UserEntity postOwner = post.getOrganization().getUser();
+
+                // Chỉ gửi nếu người comment KHÁC chủ bài viết
+                if (!postOwner.getId().equals(sender.getId())) {
+                    notificationService.sendNotification(
+                            postOwner,
+                            sender,
+                            senderName + " đã bình luận về bài viết của bạn.",
+                            "COMMENT_POST",
+                            link
+                    );
+                }
+            }
+        } catch (Exception e) {
+            // Log lỗi notify nhưng vẫn return success cho comment
+            System.err.println("⚠️ Lỗi gửi thông báo comment: " + e.getMessage());
+            // e.printStackTrace(); // Bỏ comment nếu muốn xem full stack trace
         }
         return mapToResponse(saved);
     }
@@ -183,7 +206,7 @@ public List<CommentResponse> getCommentsByPost(Long postId) {
                 if (newType == ReactionType.LIKE) {
                     comment.incrementLike();
                     comment.decrementDislike();
-                    isNewLike = true; // Chuyển từ Dislike sang Like cũng tính là like mới
+                    isNewLike = true; // Chuyển sang Like cũng cần báo
                 } else {
                     comment.incrementDislike();
                     comment.decrementLike();
@@ -200,23 +223,32 @@ public List<CommentResponse> getCommentsByPost(Long postId) {
 
             if (newType == ReactionType.LIKE) {
                 comment.incrementLike();
-                isNewLike = true; // Like mới tinh
+                isNewLike = true;
+            } else {
+                comment.incrementDislike();
             }
-            else comment.incrementDislike();
         }
         commentRepository.save(comment);
         // 3. GỬI THÔNG BÁO KHI CÓ LIKE (Chỉ gửi Like, Dislike thường không gửi để tránh toxic)
         if (isNewLike) {
-            UserEntity recipient = comment.getUser();
-            // Không gửi thông báo nếu tự like comment của mình
-            if (!recipient.getId().equals(user.getId())) {
-                //  Lấy tên người like (xử lý logic Author/User)
-                String senderName = getUserDisplayName(user);
-                String message = senderName + " đã thích bình luận của bạn.";
-                String link = "/post/" + comment.getPost().getId();
-                notificationService.sendNotification(recipient, user, message, "LIKE_COMMENT", link);
+            try {
+                UserEntity recipient = comment.getUser();
+                if (!recipient.getId().equals(user.getId())) {
+                    String senderName = getUserDisplayName(user);
+                    String contentSnippet = truncateContent(comment.getContent());
+                    String message = senderName + " đã thích bình luận của bạn: \"" + contentSnippet + "\"";
+                    String link = "/project/" + comment.getPost().getId();
+                    notificationService.sendNotification(recipient, user, message, "LIKE_COMMENT", link);
+                }
+            } catch (Exception e) {
+                System.err.println("⚠️ Lỗi gửi thông báo Like: " + e.getMessage());
             }
         }
+    }
+    // Hàm phụ trợ: Cắt ngắn nội dung comment để hiện trong thông báo
+    private String truncateContent(String content) {
+        if (content == null) return "";
+        return content.length() > 20 ? content.substring(0, 20) + "..." : content;
     }
     // --- HÀM HELPER: LẤY TÊN HIỂN THỊ (USER hoặc ORGANIZATION) ---
     private String getUserDisplayName(UserEntity user) {

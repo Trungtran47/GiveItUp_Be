@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 public interface PostViewRepository extends JpaRepository<PostViewEntity, Long> {
+    Optional<PostViewEntity> findFirstByPostIdAndUserId(Long postId, Long userId);
     Optional<PostViewEntity> findByPostIdAndUserId(Long postId, Long userId);
     @Query("SELECT COALESCE(SUM(v.viewCount), 0) FROM PostViewEntity v WHERE v.createdAt BETWEEN :start AND :end")
     Long sumViewsBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);

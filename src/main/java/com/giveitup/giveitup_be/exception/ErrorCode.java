@@ -31,6 +31,9 @@ public enum ErrorCode {
     POST_UPDATE_NOT_EXISTED(1020, "PostUpdate not existed", HttpStatus.NOT_FOUND),
     INVALID_REQUEST(1021, "Invalid request", HttpStatus.BAD_REQUEST),
     ORGANIZATION_NOT_EXISTED(1022, "Organization not existed", HttpStatus.NOT_FOUND),
+    EMAIL_EXISTED(1023, "Email existed", HttpStatus.BAD_REQUEST),
+    PHONE_EXISTED(1024, "Phone existed", HttpStatus.BAD_REQUEST),
+    INVALID_PHONE_NUMBER(1025, "Invalid phone number", HttpStatus.BAD_REQUEST),
     ;
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {

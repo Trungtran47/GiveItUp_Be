@@ -494,6 +494,42 @@ public class PostService {
             System.err.println("Lỗi gửi thông báo duyệt bài: " + e.getMessage());
         }
     }
+    public List<PostResponse> getRelatedPosts(Long categoryId, Long currentPostId) {
+        int TOTAL_NEEDED = 3;
+        Long ACTIVE_STATUS = PostStatus.ACTIVE.getCode();
+        // Bước 1: Lấy tối đa 3 bài cùng Category (trừ bài hiện tại)
+        List<PostEntity> relatedPosts = postRepository.findRandomByCategoryAndIdNot(
+                categoryId,
+                currentPostId,
+                ACTIVE_STATUS,
+                TOTAL_NEEDED
+        );
+        // Bước 2: Kiểm tra nếu chưa đủ 3 bài
+        if (relatedPosts.size() < TOTAL_NEEDED) {
+            int missingCount = TOTAL_NEEDED - relatedPosts.size();
+
+            // Tạo danh sách các ID cần loại trừ (ID hiện tại + các ID đã lấy được ở Bước 1)
+            List<Long> excludedIds = new ArrayList<>();
+            excludedIds.add(currentPostId);
+            relatedPosts.forEach(p -> excludedIds.add(p.getId()));
+
+            // Bước 3: Lấy bù thêm các bài từ category khác (random toàn hệ thống)
+            List<PostEntity> fallbackPosts = postRepository.findRandomByIdNotIn(
+                    excludedIds,
+                    ACTIVE_STATUS,
+                    missingCount
+            );
+
+            // Gộp danh sách
+            relatedPosts.addAll(fallbackPosts);
+        }
+
+        //  - Sơ đồ minh họa luồng xử lý:
+        // 1. Fetch Same Cat -> 2. Check Size -> 3. If < 3 -> Fetch Other Cat (Exclude prev IDs) -> 4. Combine.
+
+        // Bước 4: Convert sang Response
+        return postMapper.toPostResponseList(relatedPosts);
+    }
     // Chạy lúc 00:00 hằng ngày
     @Scheduled(cron = "0 0 0 * * *")
     public void updateExpiredStatus() {

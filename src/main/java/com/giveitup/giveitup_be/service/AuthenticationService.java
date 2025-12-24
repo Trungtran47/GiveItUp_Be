@@ -74,8 +74,9 @@ public class AuthenticationService {
 
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(10);
+        var loginKey = request.getUsername(); // Biến này chứa input người dùng nhập (có thể là user hoặc email)
         var user = userRepository
-                .findByUsername(request.getUsername())
+                .findByUsernameOrEmail(loginKey, loginKey)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         boolean authenticated = passwordEncoder.matches(request.getPassword(), user.getPassword());

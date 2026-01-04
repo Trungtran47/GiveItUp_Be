@@ -2,6 +2,7 @@ package com.giveitup.giveitup_be.dto.response;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.LocalDateTime;
 
@@ -32,4 +33,7 @@ public class PayoutResponse {
 //    Long approvedBy;
     Long createdByAdmin;
     PostUpdateResponse postUpdate;
+
+    LocalDateTime createdAt;
+    LocalDateTime updatedAt;
 }

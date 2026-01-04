@@ -28,13 +28,12 @@ public class PayoutController {
                 .result(payoutService.authorRequestPayout(req))
                 .build();
     }
-    @PutMapping("/update/{authorId}")
+    @PutMapping("/update")
     public ApiResponse<PayoutResponse> authorUpdatePayout(
-            @RequestBody UpdatePayoutRequest req,
-            @PathVariable Long authorId
+            @RequestBody UpdatePayoutRequest req
     ) {
         return ApiResponse.<PayoutResponse>builder()
-                .result(payoutService.updatePayout(req, authorId))
+                .result(payoutService.updatePayout(req))
                 .build();
     }
 

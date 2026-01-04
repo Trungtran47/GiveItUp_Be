@@ -118,7 +118,18 @@ public class PostSpecification {
     public static Specification<PostEntity> containsKeyword(String keyword) {
         return (root, query, cb) -> {
 
-            Predicate statusPredicate = cb.equal(root.get("status"), PostStatus.ACTIVE.getCode());
+            // --- THAY ĐỔI Ở ĐÂY ---
+            // Thay vì cb.equal, ta tạo mệnh đề IN
+            CriteriaBuilder.In<Long> inStatus = cb.in(root.get("status"));
+
+            // Thêm các status bạn muốn vào đây
+            inStatus.value(PostStatus.ACTIVE.getCode());
+            inStatus.value(PostStatus.INACTIVE.getCode()); // Ví dụ status thứ 2
+            inStatus.value(PostStatus.COMPlETE.getCode());   // Ví dụ status thứ 3
+
+            // Gán lại vào biến statusPredicate để logic bên dưới không cần sửa nhiều
+            Predicate statusPredicate = inStatus;
+            // ---------------------
 
             if (keyword == null || keyword.trim().isEmpty()) {
                 return statusPredicate;
@@ -138,7 +149,6 @@ public class PostSpecification {
             return cb.and(statusPredicate, keywordPredicate);
         };
     }
-
 
 
 }

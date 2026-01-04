@@ -10,10 +10,12 @@ import com.giveitup.giveitup_be.dto.response.IntrospectResponse;
 import com.giveitup.giveitup_be.entity.InvalidatedTokenEntity;
 import com.giveitup.giveitup_be.entity.RoleEntity;
 import com.giveitup.giveitup_be.entity.UserEntity;
+import com.giveitup.giveitup_be.enums.UserStatus;
 import com.giveitup.giveitup_be.exception.AppException;
 import com.giveitup.giveitup_be.exception.ErrorCode;
 import com.giveitup.giveitup_be.mapper.RoleMapper;
 import com.giveitup.giveitup_be.repository.InvalidatedTokenRepository;
+import com.giveitup.giveitup_be.repository.RoleRepository;
 import com.giveitup.giveitup_be.repository.UserRepository;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
@@ -26,17 +28,20 @@ import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.text.ParseException;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.Date;
-import java.util.StringJoiner;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -46,7 +51,9 @@ public class AuthenticationService {
     UserRepository userRepository;
     InvalidatedTokenRepository invalidatedTokenRepository;
     RoleMapper roleMapper;
-
+    RoleRepository roleRepository;
+    JavaMailSender javaMailSender;
+    PasswordEncoder passwordEncoder;
     @NonFinal
     @Value("${jwt.signerKey}")
     protected String SIGNER_KEY;
@@ -59,6 +66,91 @@ public class AuthenticationService {
     @Value("${jwt.refreshable-duration}")
     protected long REFRESHABLE_DURATION;
 
+    // 1. Gửi OTP
+    public void sendOtp(String email) {
+        UserEntity user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.EMAIL_NOT_EXISTED));
+        // Tạo OTP 6 số
+        String otp = String.format("%06d", new Random().nextInt(999999));
+        // Lưu OTP vào DB (hết hạn sau 5 phút)
+        user.setOtp(otp);
+        user.setOtpExpiryTime(LocalDateTime.now().plusMinutes(5));
+        userRepository.save(user);
+        // Gửi email
+        SimpleMailMessage msg = new SimpleMailMessage();
+        msg.setTo(email); // Gửi đến email người dùng nhập
+        msg.setSubject("Mã xác nhận quên mật khẩu");
+        msg.setText("Mã OTP của bạn là: " + otp + "\nMã này có hiệu lực trong 5 phút.");
+        javaMailSender.send(msg);
+    }
+    // 2. Xác thực OTP và Đổi mật khẩu
+    public void verifyAndResetPassword(String email, String otp, String newPassword) {
+        UserEntity user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        if (user.getOtp() == null || !user.getOtp().equals(otp)) {
+            throw new AppException(ErrorCode.INCORRECT_OTP_CODE);
+        }
+        if (user.getOtpExpiryTime().isBefore(LocalDateTime.now())) {
+            throw new AppException(ErrorCode.OTP_CODE_HAS_EXPIRED);
+        }
+        // Đổi mật khẩu và mã hóa
+        user.setPassword(passwordEncoder.encode(newPassword));
+        // Xóa OTP để không dùng lại được
+        user.setOtp(null);
+        user.setOtpExpiryTime(null);
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public String handleGoogleLogin(String email, String fullName, String photoUrl
+//            , LocalDate dob, String genderStr, String phoneNumber
+
+
+    ) {
+        Optional<UserEntity> optionalUser = userRepository.findByEmail(email);
+        UserEntity user;
+
+        if (optionalUser.isEmpty()) {
+            // --- CASE 1: TẠO MỚI ---
+            log.info("Tạo mới user từ Google: {}", email);
+
+            String firstName = fullName;
+            String lastName = "";
+            if (fullName != null && fullName.contains(" ")) {
+                int lastSpaceIndex = fullName.lastIndexOf(" ");
+                firstName = fullName.substring(0, lastSpaceIndex);
+                lastName = fullName.substring(lastSpaceIndex + 1);
+            }
+//            Long genderId = null;
+//            if ("male".equalsIgnoreCase(genderStr)) genderId = 1L;
+//            else if ("female".equalsIgnoreCase(genderStr)) genderId = 2L;
+            RoleEntity defaultRole = roleRepository.findById("USER")
+                    .orElseThrow(() -> new RuntimeException("Error: Role USER is not found."));
+
+            user = UserEntity.builder()
+                    .email(email)
+                    .username(email)
+                    .firstName(firstName)
+                    .lastName(lastName)
+                    .imageUser(photoUrl)
+                    .role(defaultRole)
+                    .status((long) UserStatus.USER.getCode())
+                    .password(UUID.randomUUID().toString())
+                    .isPublic(false)
+//                    .dob(dob)
+//                    .gender(genderId)
+//                    .phoneNumber(phoneNumber)
+                    .build();
+
+            user = userRepository.save(user); // Lưu xong user vẫn ở trạng thái persistent
+        } else {
+            // --- CASE 2: CẬP NHẬT ---
+            user = optionalUser.get();
+//            user.setImageUser(photoUrl);
+            user = userRepository.save(user);
+        }
+        return generateToken(user);
+    }
     public IntrospectResponse introspect(IntrospectRequest request) throws JOSEException, ParseException {
         var token = request.getToken();
         boolean isValid = true;

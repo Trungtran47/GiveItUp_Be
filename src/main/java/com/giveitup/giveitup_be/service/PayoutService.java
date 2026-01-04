@@ -68,12 +68,12 @@ public class PayoutService {
         payoutRepo.save(payout);
         return toResponse(payout);
     }
-    public PayoutResponse updatePayout(UpdatePayoutRequest req, Long authorId) {
-
+    public PayoutResponse updatePayout(UpdatePayoutRequest req) {
+        UserEntity user = userService.getMyInfoReturnEntity();
         PayoutEntity payout = payoutRepo.findById(req.getPayoutId())
                 .orElseThrow(() -> new AppException(ErrorCode.PAYOUT_NOT_FOUND));
 
-        if (!payout.getPost().getOrganization().getId().equals(authorId)) {
+        if (!payout.getPost().getOrganization().getUser().getId().equals(user.getId())) {
             throw new AppException(ErrorCode.NOT_AUTHOR);
         }
 
@@ -157,7 +157,7 @@ public class PayoutService {
     public PayoutResponse authorConfirm(Long authorId, Long payoutId) {
         PayoutEntity payout = payoutRepo.findById(payoutId)
                 .orElseThrow(() -> new AppException(ErrorCode.PAYOUT_NOT_FOUND));
-
+        PostEntity post  = payout.getPost();
         if (!payout.getPost().getOrganization().getId().equals(authorId)) {
             throw new AppException(ErrorCode.NOT_AUTHOR);
         }
@@ -168,8 +168,9 @@ public class PayoutService {
 
         payout.setStatus(PayoutStatus.AUTHOR_CONFIRMED.getCode());
         payout.setConfirmedAt(LocalDateTime.now());
-
+        post.addDisbursedAmount(payout.getAmount());
         payoutRepo.save(payout);
+        postRepo.save(post);
         return toResponse(payout);
     }
     public PayoutResponse adminCreatePayout(AdminCreatePayoutRequest req, Long adminId) {
@@ -240,6 +241,8 @@ public class PayoutService {
                 .transferProofImageUrl(p.getTransferProofImageUrl())
                 .transferProofImagePublicId(p.getTransferProofImagePublicId())
                 .requestedAt(p.getRequestedAt())
+                .createdAt(p.getCreatedAt())
+                .updatedAt(p.getUpdatedAt())
 //                .approvedAt(p.getApprovedAt())
                 .confirmedAt(p.getConfirmedAt())
                 .requestedBy(p.getRequestedBy() != null ? p.getRequestedBy().getId() : null)
@@ -262,6 +265,8 @@ public class PayoutService {
                 .transferProofImagePublicId(p.getTransferProofImagePublicId())
                 .requestedAt(p.getRequestedAt())
                 .createdByAdminAt(p.getCreatedByAdminAt())
+                .createdAt(p.getCreatedAt())
+                .updatedAt(p.getUpdatedAt())
 //                .approvedAt(p.getApprovedAt())
                 .confirmedAt(p.getConfirmedAt())
                 .requestedBy(p.getRequestedBy() != null ? organizationMapper.toOrganizationResponse(p.getRequestedBy()) : null)

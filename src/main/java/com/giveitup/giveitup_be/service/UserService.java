@@ -184,6 +184,13 @@ public UserResponse registerAuthor(Long userId, AuthorCreationRequest request) {
             userEntity.setImageUser(uploadResult.get("url"));
             userEntity.setPublicImageUserId(uploadResult.get("public_id"));
         }
+        if (request.isDeleteImage()){
+            if (userEntity.getImageUser() != null) {
+                cloudinaryService.deleteFile(userEntity.getPublicImageUserId(), true);
+            }
+            userEntity.setImageUser(null);
+            userEntity.setPublicImageUserId(null);
+        }
         return userMapper.toUserResponse(userRepository.save(userEntity));
     }
 

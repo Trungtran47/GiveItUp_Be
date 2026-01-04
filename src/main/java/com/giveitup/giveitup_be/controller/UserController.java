@@ -4,6 +4,7 @@ import com.giveitup.giveitup_be.dto.paging.PagingResponse;
 import com.giveitup.giveitup_be.dto.request.*;
 import com.giveitup.giveitup_be.dto.response.UserResponse;
 import com.giveitup.giveitup_be.enums.UserStatus;
+import com.giveitup.giveitup_be.service.AuthenticationService;
 import com.giveitup.giveitup_be.service.UserService;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
@@ -13,6 +14,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/users")
 @RequiredArgsConstructor
@@ -20,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 public class UserController {
     UserService userService;
+    AuthenticationService authService;
 //    // API 1: Người dùng nhập email/username để lấy mã
 //    @PostMapping("/forgot-password")
 //    public ApiResponse<String> forgotPassword(@RequestBody ForgotPasswordRequest request) {
@@ -128,6 +132,27 @@ public class UserController {
         return ApiResponse.<UserResponse>builder()
                 .result(userService.getUserByOrganizationId(organizationId))
                 .build();
+    }
+    // API 1: Yêu cầu gửi OTP
+    @PostMapping("/forgot-password")
+    public ApiResponse<String> forgotPassword(@RequestBody Map<String, String> payload) {
+            String email = payload.get("email");
+            authService.sendOtp(email);
+            return ApiResponse.<String>builder()
+                    .message( "Mã OTP đã được gửi đến email của bạn!")
+                    .build();
+    }
+
+    // API 2: Reset mật khẩu
+    @PostMapping("/reset-password")
+    public ApiResponse<?> resetPassword(@RequestBody Map<String, String> payload) {
+            String email = payload.get("email");
+            String otp = payload.get("otp");
+            String newPassword = payload.get("newPassword");
+            authService.verifyAndResetPassword(email, otp, newPassword);
+            return  ApiResponse.<String>builder()
+                    .message( "Đổi mật khẩu thành công!")
+                    .build();
     }
 }
 

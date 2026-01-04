@@ -47,6 +47,8 @@ public class CommentEntity {
     @OneToMany(mappedBy = "parentComment", cascade = CascadeType.ALL, orphanRemoval = true)
     List<CommentEntity> replies;
 
+    @OneToMany(mappedBy = "comment", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<CommentReactionEntity> reactions;
     // Thời gian tạo
     @CreatedDate
     @Column(updatable = false)

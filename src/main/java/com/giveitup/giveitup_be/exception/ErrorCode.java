@@ -34,7 +34,10 @@ public enum ErrorCode {
     EMAIL_EXISTED(1023, "Email existed", HttpStatus.BAD_REQUEST),
     PHONE_EXISTED(1024, "Phone existed", HttpStatus.BAD_REQUEST),
     INVALID_PHONE_NUMBER(1025, "Invalid phone number", HttpStatus.BAD_REQUEST),
-    ;
+    EMAIL_NOT_EXISTED(1026, "Email không tồn tại trong hệ thống", HttpStatus.NOT_FOUND),
+    INCORRECT_OTP_CODE(1027, "Mã OTP không chính xác!", HttpStatus.BAD_REQUEST),
+    OTP_CODE_HAS_EXPIRED(1028, "Mã OTP đã hết hạn!", HttpStatus.BAD_REQUEST),
+            ;
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {
         this.code = code;

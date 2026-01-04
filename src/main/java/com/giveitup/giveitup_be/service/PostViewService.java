@@ -15,6 +15,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -36,20 +37,28 @@ public class PostViewService {
     public void addView(Long userId, PostEntity post) {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-        PostViewEntity postView = postViewRepository.findFirstByPostIdAndUserId(post.getId(), userId)
-                .orElseGet(() -> {
-                    PostViewEntity newView = new PostViewEntity();
-                    newView.setPost(post);
-                    newView.setUser(user);
-                    newView.setViewCount(0L);
-                    return newView;
-                });
-        // Tăng lượt xem
-        postView.setViewCount(postView.getViewCount() + 1);
-        postViewRepository.save(postView);
-        // Tăng tổng lượt xem của post
-        post.setViewCount(post.getViewCount() + 1);
-        postRepository.save(post);
+        Long ownerId = post.getOrganization().getUser().getId();
+        if (userId.equals(ownerId)) {
+            log.info("User {} là chủ sở hữu bài viết {}, không tính lượt xem.", userId, post.getOrganization().getUser().getId());
+            return;
+        }
+        try {
+            PostViewEntity postView = postViewRepository.findFirstByPostIdAndUserId(post.getId(), userId)
+                    .orElseGet(() -> {
+                        PostViewEntity newView = new PostViewEntity();
+                        newView.setPost(post);
+                        newView.setUser(user);
+                        newView.setViewCount(0L);
+                        return postViewRepository.save(newView);
+                    });
+
+            postView.setViewCount(postView.getViewCount() + 1);
+            postViewRepository.save(postView);
+            post.setViewCount(post.getViewCount() + 1);
+            postRepository.save(post);
+        } catch (DataIntegrityViolationException e) {
+            log.warn("Concurrent view update for user {} post {}", userId, post.getId());
+        }
     }
     public Page<PostResponse> getPostsViewByUserId(Long userId, BasePagingRequest request) {
         UserEntity user = userRepository.findById(userId)

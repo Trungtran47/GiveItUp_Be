@@ -50,7 +50,8 @@ public class DonateService {
 // Lưu donate
         DonateEntity savedDonate = donateRepository.save(donateEntity);
         // Tính tổng donate của bài post
-        Double totalAmount = donateRepository.sumAmountByPostId(postEntity.getId());
+//        Double totalAmount = donateRepository.sumAmountByPostId(postEntity.getId());
+        postEntity.addDonation(savedDonate.getAmount());
         // --- [1] LOGIC THÔNG BÁO DONATE ---
         // Chỉ gửi nếu người donate KHÔNG PHẢI là chủ dự án (tránh spam tự donate)
         if (!userEntity.getId().equals(postEntity.getOrganization().getUser().getId())) {
@@ -76,7 +77,7 @@ public class DonateService {
                     "/project/" + postEntity.getId() // Link
             );
         }
-        if (totalAmount >= postEntity.getTargetAmount()){
+        if (postEntity.getDonatedAmount() >= postEntity.getTargetAmount()){
             postEntity.setStatus(PostStatus.COMPlETE.getCode());
             postEntity.setStatusName(PostStatus.COMPlETE.getLabel());
             // --- [2] LOGIC THÔNG BÁO HOÀN THÀNH MỤC TIÊU ---
@@ -89,7 +90,7 @@ public class DonateService {
                     "/project/" + postEntity.getId()
             );
         }
-        postEntity.setDonatedAmount(totalAmount);
+//        postEntity.setDonatedAmount(totalAmount);
         postRepository.save(postEntity);
         return donateMapper.toDonateResponse(savedDonate);
     }

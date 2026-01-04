@@ -20,6 +20,7 @@ public class UserUpdateRequest {
     String phoneNumber;
     Long gender;
     String address;
+    boolean deleteImage;
     MultipartFile imageUser;
     String publicImageUserId;
     @DobConstraint(min = 18, message = "INVALID_DOB")

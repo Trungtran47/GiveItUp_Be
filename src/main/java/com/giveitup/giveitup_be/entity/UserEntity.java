@@ -50,7 +50,9 @@ public class UserEntity {
     @Builder.Default
     @Column(nullable = false)
     boolean isPublic = false;
-
+    // Quên mật khẩu
+    private String otp;
+    private LocalDateTime otpExpiryTime;
 
     @Column( columnDefinition = "NVARCHAR(MAX)")
     String introduce;

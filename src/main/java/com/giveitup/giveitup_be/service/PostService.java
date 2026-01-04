@@ -310,6 +310,8 @@ public class PostService {
             res.setNote(p.getNote());
             res.setCreatedByAdminAt(p.getCreatedByAdminAt());
             res.setConfirmedAt(p.getConfirmedAt());
+            res.setCreatedAt(p.getCreatedAt());
+            res.setUpdatedAt(p.getUpdatedAt());
             res.setPostId(p.getId());
             res.setNoteAdmin(p.getNoteAdmin());
             res.setTransferProofImageUrl(p.getTransferProofImageUrl());

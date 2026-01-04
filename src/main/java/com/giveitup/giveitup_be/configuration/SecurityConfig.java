@@ -1,5 +1,6 @@
 package com.giveitup.giveitup_be.configuration;
 
+import com.giveitup.giveitup_be.config.CustomOAuth2SuccessHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,8 +10,6 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
@@ -25,11 +24,13 @@ import java.util.Arrays;
 @EnableMethodSecurity
 public class SecurityConfig {
     private final String[] PUBLIC_ENDPOINTS = {
-        "/users", "/auth/token", "/auth/introspect", "/auth/logout", "/auth/refresh","/posts", "/posts/top5", "/posts/map"
+        "/users", "/auth/token","/users/forgot-password","/users/reset-password", "/auth/introspect", "/auth/logout", "/auth/refresh","/posts", "/posts/top5", "/posts/map"
     };
 
     @Autowired
     private CustomJwtDecoder customJwtDecoder;
+    @Autowired
+    private CustomOAuth2SuccessHandler customOAuth2SuccessHandler;
     // === Webhook public (không auth) ===
     @Bean
     public SecurityFilterChain webhookFilterChain(HttpSecurity http) throws Exception {
@@ -51,6 +52,7 @@ public class SecurityConfig {
                         // GET /posts public
                         .requestMatchers(HttpMethod.GET, "/posts/top5", "/posts","/posts/map").permitAll()
                         .requestMatchers("/ws/**").permitAll()
+                        .requestMatchers("/login/**", "/oauth2/**").permitAll()
                         .anyRequest().authenticated()
                 )
 
@@ -60,14 +62,25 @@ public class SecurityConfig {
                                 .jwtAuthenticationConverter(jwtAuthenticationConverter()))
                         .authenticationEntryPoint(new JwtAuthenticationEntryPoint())
                 )
+                // Cấu hình Resource Server (Xử lý JWT Token cho các API bình thường)
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(jwtConfigurer -> jwtConfigurer
+                                .decoder(customJwtDecoder)
+                                .jwtAuthenticationConverter(jwtAuthenticationConverter()))
+                        .authenticationEntryPoint(new JwtAuthenticationEntryPoint())
+                )
+                // [QUAN TRỌNG] Cấu hình OAuth2 Login (Xử lý đăng nhập Google)
+                .oauth2Login(oauth2 -> oauth2
+                        // Endpoint này là nơi Google trả code về, Spring tự xử lý, ta không cần viết Controller
+                        // Mặc định là /login/oauth2/code/google
+                        .redirectionEndpoint(endpoint -> endpoint
+                                .baseUri("/login/oauth2/code/*")
+                        )
+                        // Khi đăng nhập thành công thì chạy vào Handler này để tạo JWT và redirect về FE
+                        .successHandler(customOAuth2SuccessHandler)
+                )
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults());
-//                .oauth2Login(Customizer.withDefaults()); // sử dụng cách mới
-//                .oauth2Login(oauth2 -> oauth2
-//                .loginPage("http://localhost:3000/login") // custom login page
-//                .defaultSuccessUrl("http://localhost:3000/home") // sau khi login thành công
-//                .failureUrl("http://localhost:3000/login?error")
-//        );
 
         return httpSecurity.build();
     }
@@ -100,9 +113,9 @@ public class SecurityConfig {
 
         return jwtAuthenticationConverter;
     }
-
-    @Bean
-    PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(10);
-    }
+//
+//    @Bean
+//    PasswordEncoder passwordEncoder() {
+//        return new BCryptPasswordEncoder(10);
+//    }
 }

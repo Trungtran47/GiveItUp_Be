@@ -18,6 +18,8 @@ public class PostResponse {
     String description;
     Double targetAmount;
     Double donatedAmount;
+    Double disbursedAmount;
+    Long donationCount;
     Long viewCount;
     LocalDateTime viewAt;
     Long likeCount;

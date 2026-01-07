@@ -1,6 +1,7 @@
 package com.giveitup.giveitup_be.mapper;
 
 import com.giveitup.giveitup_be.dto.request.PostRequest;
+import com.giveitup.giveitup_be.dto.response.PostAIResponse;
 import com.giveitup.giveitup_be.dto.response.PostResponse;
 import com.giveitup.giveitup_be.entity.PostEntity;
 import org.mapstruct.Mapper;
@@ -18,11 +19,12 @@ public interface PostMapper {
     @Mapping(target = "organization", ignore = true)
     @Mapping(target = "payouts", ignore = true)
     PostEntity toPost(PostRequest request);
+
 //    @Mapping(target = "payouts", ignore = true)
     @Mapping(target = "liked", ignore = true)
     PostResponse toPostResponse(PostEntity response);
     List<PostResponse> toPostResponseList(List<PostEntity> response);
-
+    List<PostAIResponse> toPostAI(List<PostEntity> response);
     //    @Mapping(target = "role", ignore = true)
 //    void updatePost(@MappingTarget PostEntity postEntity, PostRequest request);
 }

@@ -50,7 +50,7 @@ public class SecurityConfig {
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS).permitAll()
                         // GET /posts public
-                        .requestMatchers(HttpMethod.GET, "/posts/top5", "/posts","/posts/map").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/posts/top5", "/posts","/posts/map", "/posts/getRcmPostDB").permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/login/**", "/oauth2/**").permitAll()
                         .anyRequest().authenticated()

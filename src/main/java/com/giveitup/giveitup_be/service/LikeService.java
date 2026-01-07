@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -37,6 +38,7 @@ public class LikeService {
     PostMapper postMapper;
     UserService userService;
     NotificationService notificationService;
+    RedisService redisService;
     @Transactional
     public LikeResponse toggleLike(Long postId) {
         UserEntity user = userService.getMyInfoReturnEntity();
@@ -50,6 +52,10 @@ public class LikeService {
             likeRepository.delete(existingLike);
             post.setLikeCount(post.getLikeCount() - 1);
             postRepository.save(post);
+            // [REDIS FIX]: XÓA KHỎI REDIS KHI UNLIKE
+            CompletableFuture.runAsync(() -> {
+                redisService.removeLikeHistory(user.getId(), post.getId());
+            });
             return LikeResponse.builder()
                     .postId(post.getId())
                     .userId(user.getId())
@@ -57,6 +63,7 @@ public class LikeService {
                     .likeCount(post.getLikeCount())
                     .liked(false)
                     .build();
+
         }
         // ----- CASE 2: User CHƯA LIKE -> LIKE -----
         LikeEntity like = LikeEntity.builder()
@@ -66,6 +73,14 @@ public class LikeService {
         likeRepository.save(like);
         post.setLikeCount(post.getLikeCount() + 1);
         postRepository.save(post);
+
+        // [REDIS FIX]: LƯU VÀO LIST "LIKES" RIÊNG
+        CompletableFuture.runAsync(() -> {
+            redisService.saveLikeHistory(user.getId(), post.getId());
+        });
+        // =================================================================
+        // [END] REDIS LOGIC
+        // =================================================================
         // --- [START] GỬI THÔNG BÁO ---
         // Chỉ gửi thông báo nếu người like KHÔNG PHẢI là chủ bài viết
         if (!user.getId().equals(post.getOrganization().getUser().getId())) {

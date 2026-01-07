@@ -4,6 +4,7 @@ import com.giveitup.giveitup_be.dto.request.PostRequest;
 import com.giveitup.giveitup_be.dto.request.ReviewPostRequest;
 import com.giveitup.giveitup_be.dto.request.SearchListPostRequest;
 import com.giveitup.giveitup_be.dto.response.PayoutResponse;
+import com.giveitup.giveitup_be.dto.response.PostAIResponse;
 import com.giveitup.giveitup_be.dto.response.PostMapResponse;
 import com.giveitup.giveitup_be.dto.response.PostResponse;
 import com.giveitup.giveitup_be.entity.*;
@@ -35,6 +36,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Service
@@ -55,9 +57,18 @@ public class PostService {
     ImageRepository imageRepository;
     NotificationService notificationService;
     OrganizationRepository organizationRepository;
-    private final UserService userService;
+    UserService userService;
+    RedisService redisService;
+    public List<PostAIResponse> getAllPostsForAI() {
+       List<PostEntity> postResponseList = postRepository.findAllByStatus(PostStatus.ACTIVE.getCode());
+       return postMapper.toPostAI(postResponseList);
+    }
     public List<PostResponse> getTop5( ){
         List<PostEntity> post = postRepository.findTop5ByStatusOrderByDonatedAmountDesc(PostStatus.ACTIVE.getCode());
+        return postMapper.toPostResponseList(post);
+    }
+    public List<PostResponse> getTop3( ){
+        List<PostEntity> post = postRepository.findTop3ByStatusOrderByDonatedAmountDesc(PostStatus.ACTIVE.getCode());
         return postMapper.toPostResponseList(post);
     }
     public List<PostMapResponse> getPostsByCity(String city) {
@@ -96,6 +107,8 @@ public class PostService {
             postEntity.setCategory(categoryEntity);
             postEntity.setBankAccount(bankAccountEntity);
             postEntity.setDonatedAmount(0.0);
+            postEntity.setDisbursedAmount(0.0);
+            postEntity.setDonationCount(0L);
             postEntity.setLikeCount(0L);    // bắt buộc
             postEntity.setViewCount(0L);
             postEntity.setStatus(PostStatus.PENDING.getCode());
@@ -379,6 +392,13 @@ public class PostService {
         // lock row để tránh concurrency issues
         PostEntity post = postRepository.findById(postId)
                 .orElseThrow(() -> new AppException(ErrorCode.POST_NOT_EXISTED));
+        if (user != null) {
+            // Sử dụng CompletableFuture thay vì new Thread (tốt hơn cho Spring Boot)
+            CompletableFuture.runAsync(() -> {
+                // [REDIS FIX]: Chỉ lưu vào lịch sử VIEW
+                redisService.saveViewHistory(user.getId(), postId);
+            });
+        }
         boolean liked = likeRepository.existsByPostIdAndUserId( post.getId(),user.getId());
         postViewService.addView(user.getId(), post);
         PostResponse res = postMapper.toPostResponse(post);

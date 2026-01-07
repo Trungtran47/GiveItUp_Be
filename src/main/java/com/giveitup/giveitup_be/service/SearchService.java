@@ -23,6 +23,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -35,6 +37,7 @@ public class SearchService {
       SearchHistoryRepository searchHistoryRepository;
       UserService userService; // Lấy user đang login
       PostMapper postMapper;
+      RedisService redisService;
 
     public Page<PostResponse> search(String keyword, BasePagingRequest request) {
         // Nếu không có keyword → trả về trang rỗng
@@ -59,6 +62,27 @@ public class SearchService {
         );
         // 4. Query phân trang
         Page<PostEntity> posts = postRepository.findAll(spec, pageable);
+        // =================================================================
+        // [START] REDIS LOGIC: LƯU KẾT QUẢ TÌM KIẾM CHO AI
+        // =================================================================
+        if (currentUser != null && posts.hasContent()) {
+            // Lấy danh sách ID của các bài viết tìm được ở trang hiện tại
+            List<Long> foundPostIds = posts.getContent().stream()
+                    .map(PostEntity::getId)
+                    .collect(Collectors.toList());
+
+            CompletableFuture.runAsync(() -> {
+                try {
+                    // Gọi hàm mới trong RedisService
+                    redisService.saveSearchHistory(currentUser.getId(), foundPostIds);
+                } catch (Exception e) {
+                    log.error("Error saving search history to Redis", e);
+                }
+            });
+        }
+        // =================================================================
+        // [END] REDIS LOGIC
+        // =================================================================
         // 5. Map sang Page<PostResponse>
         return posts.map(postMapper::toPostResponse);
     }

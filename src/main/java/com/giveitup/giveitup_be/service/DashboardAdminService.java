@@ -3,6 +3,8 @@ package com.giveitup.giveitup_be.service;
 import com.giveitup.giveitup_be.dto.response.DashboardAdminResponse;
 import com.giveitup.giveitup_be.dto.response.DashboardAdminResponse.*;
 import com.giveitup.giveitup_be.entity.*;
+import com.giveitup.giveitup_be.enums.PayoutStatus;
+import com.giveitup.giveitup_be.enums.PostStatus;
 import com.giveitup.giveitup_be.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -33,10 +35,10 @@ public class DashboardAdminService {
     private final FollowRepository followRepository;
 
     // Constants cho Status
-    private final Long STATUS_ACTIVE = 1L;
-    private final Long STATUS_CLOSED = 2L;
-    private final Long STATUS_PAYOUT_PENDING = 1L;
-    private final Long STATUS_PAYOUT_APPROVED = 4L;
+//    private final Long STATUS_ACTIVE = 1L;
+//    private final Long STATUS_CLOSED = 2L;
+//    private final Long STATUS_PAYOUT_PENDING = 1L;
+//    private final Long STATUS_PAYOUT_APPROVED = 4L;
 
     public DashboardAdminResponse getDashboardData(LocalDate fromDate, LocalDate toDate) {
         LocalDateTime start = fromDate.atStartOfDay();
@@ -47,9 +49,9 @@ public class DashboardAdminService {
                 .totalUsers(userRepository.count())
                 .totalAuthors(organizationRepository.count())
                 .totalPosts(postRepository.count())
-                .activePosts(postRepository.countByStatus(STATUS_ACTIVE))
-                .closedPosts(postRepository.countByStatus(STATUS_CLOSED))
-                .expiredPosts(postRepository.countExpiredPosts())
+                .activePosts(postRepository.countByStatus(PostStatus.ACTIVE.getCode()))
+                .closedPosts(postRepository.countByStatus(PostStatus.COMPlETE.getCode()))
+                .expiredPosts(postRepository.countByStatus(PostStatus.INACTIVE.getCode()))
                 .build();
 
         // 2. Lấy Overview Stats & Growth
@@ -85,7 +87,8 @@ public class DashboardAdminService {
         // Current metrics
         Double currentDonation = donateRepository.sumAmountBetween(start, end);
         long currentDonationCount = donateRepository.countByCreatedAtBetween(start, end);
-        Double currentPayout = payoutRepository.sumPayoutByStatusBetween(STATUS_PAYOUT_APPROVED, start, end);
+        List<Long> statusList = Arrays.asList(PayoutStatus.TRANSFERRED.getCode(), PayoutStatus.AUTHOR_CONFIRMED.getCode());
+        Double currentPayout = payoutRepository.sumPayoutByStatusesBetween(statusList, start, end);
         Long currentViews = postViewRepository.sumViewsBetween(start, end);
         long currentLikes = likeRepository.countByCreatedAtBetween(start, end);
 
@@ -113,7 +116,8 @@ public class DashboardAdminService {
 
     private List<FinanceChartDto> getFinanceChartData(LocalDateTime start, LocalDateTime end) {
         List<Object[]> donations = donateRepository.getDailyDonationStats(start, end);
-        List<Object[]> payouts = payoutRepository.getDailyPayoutStats(STATUS_PAYOUT_APPROVED, start, end);
+        List<Long> statusList = Arrays.asList(PayoutStatus.TRANSFERRED.getCode(), PayoutStatus.AUTHOR_CONFIRMED.getCode());
+        List<Object[]> payouts = payoutRepository.getDailyPayoutStats(statusList, start, end);
 
         Map<String, FinanceChartDto> chartMap = new TreeMap<>();
 
@@ -143,7 +147,7 @@ public class DashboardAdminService {
     }
 
     private List<PayoutRequestDto> getPendingPayouts() {
-        return payoutRepository.findByStatus(STATUS_PAYOUT_PENDING).stream()
+        return payoutRepository.findByStatus(PayoutStatus.PENDING.getCode()).stream()
                 .map(p -> PayoutRequestDto.builder()
                         .id(p.getId())
                         .amount(p.getAmount())
@@ -199,7 +203,7 @@ public class DashboardAdminService {
         activities.sort((a, b) -> b.getCreatedTime().compareTo(a.getCreatedTime()));
         activities.forEach(a -> a.setTime(a.getCreatedTime().format(DateTimeFormatter.ofPattern("HH:mm dd/MM"))));
 
-        return activities.stream().limit(10).collect(Collectors.toList());
+        return activities.stream().limit(3).collect(Collectors.toList());
     }
 
     private List<TopPostDto> getTopPosts() {

@@ -37,6 +37,7 @@ public enum ErrorCode {
     EMAIL_NOT_EXISTED(1026, "Email không tồn tại trong hệ thống", HttpStatus.NOT_FOUND),
     INCORRECT_OTP_CODE(1027, "Mã OTP không chính xác!", HttpStatus.BAD_REQUEST),
     OTP_CODE_HAS_EXPIRED(1028, "Mã OTP đã hết hạn!", HttpStatus.BAD_REQUEST),
+    USER_HAS_BLOCKED(1029, "User has blocked", HttpStatus.BAD_REQUEST),
             ;
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {

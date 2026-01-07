@@ -2,12 +2,14 @@ package com.giveitup.giveitup_be.config;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.giveitup.giveitup_be.exception.AppException;
 import com.giveitup.giveitup_be.service.AuthenticationService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.*;
 import org.springframework.security.core.Authentication;
@@ -20,27 +22,29 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class CustomOAuth2SuccessHandler implements AuthenticationSuccessHandler {
+    @Value("${app.frontend-url}")
+    private String frontendUrl;
+
     @Lazy
     private final AuthenticationService authenticationService;
     // Inject service này để lấy Access Token
-    private final OAuth2AuthorizedClientService authorizedClientService;
-    private final RestTemplate restTemplate = new RestTemplate(); // Hoặc inject Bean
-
+//    private final OAuth2AuthorizedClientService authorizedClientService;
+//    private final RestTemplate restTemplate = new RestTemplate(); // Hoặc inject Bean
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request,
                                         HttpServletResponse response,
                                         Authentication authentication)
             throws IOException, ServletException {
-
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
         OAuth2AuthenticationToken oauthToken = (OAuth2AuthenticationToken) authentication;
-
         // 1. Lấy thông tin cơ bản
         String email = oAuth2User.getAttribute("email");
         String name = oAuth2User.getAttribute("name");
@@ -98,17 +102,24 @@ public class CustomOAuth2SuccessHandler implements AuthenticationSuccessHandler 
 //            log.error("Không thể lấy thông tin chi tiết từ Google People API: {}", e.getMessage());
 //            // Không throw lỗi, vẫn cho login bình thường với thông tin cơ bản
 //        }
-
         if (email == null) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Không tìm thấy Email từ Google");
             return;
         }
-
-        // 4. Truyền tất cả vào Service xử lý
-        String token = authenticationService.handleGoogleLogin(email, name, photoUrl
-//                , dob, gender, phoneNumber
+        try {
+            String token = authenticationService.handleGoogleLogin(email, name, photoUrl
         );
-
-        response.sendRedirect("http://localhost:3000/oauth-success?token=" + token);
-    }
+        response.sendRedirect(frontendUrl +"/oauth-success?token=" + token);
+        } catch (AppException e) {
+            // --- XỬ LÝ KHI USER BỊ CHẶN HOẶC LỖI LOGIC KHÁC ---
+            log.error("Lỗi login Google: {}", e.getErrorCode().getMessage());
+            String errorMessage = e.getErrorCode().getMessage();
+            String encodedError = URLEncoder.encode(errorMessage, StandardCharsets.UTF_8);
+            response.sendRedirect(frontendUrl +"/login?error=" + encodedError);
+        } catch (Exception e) {
+            // --- XỬ LÝ LỖI KHÔNG XÁC ĐỊNH ---
+            log.error("Lỗi không xác định khi login Google", e);
+            response.sendRedirect(frontendUrl +"/login?error=Lỗi hệ thống");
+        }
+        }
 }

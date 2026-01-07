@@ -134,7 +134,7 @@ public class AuthenticationService {
                     .lastName(lastName)
                     .imageUser(photoUrl)
                     .role(defaultRole)
-                    .status((long) UserStatus.USER.getCode())
+                    .status( UserStatus.USER.getCode())
                     .password(UUID.randomUUID().toString())
                     .isPublic(false)
 //                    .dob(dob)
@@ -146,7 +146,9 @@ public class AuthenticationService {
         } else {
             // --- CASE 2: CẬP NHẬT ---
             user = optionalUser.get();
-//            user.setImageUser(photoUrl);
+            if(user.getStatus().equals(UserStatus.INACTIVE.getCode())){
+                throw new AppException(ErrorCode.USER_HAS_BLOCKED);
+            }
             user = userRepository.save(user);
         }
         return generateToken(user);
@@ -170,7 +172,9 @@ public class AuthenticationService {
         var user = userRepository
                 .findByUsernameOrEmail(loginKey, loginKey)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-
+        if(!Objects.equals(user.getRole().getName(), "ADMIN") &&  user.getStatus().equals(UserStatus.INACTIVE.getCode())){
+            throw new AppException(ErrorCode.USER_HAS_BLOCKED);
+        }
         boolean authenticated = passwordEncoder.matches(request.getPassword(), user.getPassword());
 
         if (!authenticated) throw new AppException(ErrorCode.UNAUTHENTICATED);

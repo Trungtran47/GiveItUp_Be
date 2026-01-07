@@ -2,6 +2,7 @@ package com.giveitup.giveitup_be.service;
 
 import com.giveitup.giveitup_be.dto.response.FlaskChatbotResponse;
 import com.giveitup.giveitup_be.dto.response.FlaskCommentResponse;
+import lombok.RequiredArgsConstructor; // 1. Import Lombok
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -12,9 +13,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor // 2. Thêm Annotation này để tự động Inject
 public class AiService {
-    private final String FLASK_URL = "http://localhost:5000"; // Hoặc IP của server chứa Flask
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final String FLASK_URL = "http://localhost:5000";
+    private final RestTemplate restTemplate;
 
     // 1. Check Comment
     public FlaskCommentResponse checkComment(String comment) {

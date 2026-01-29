@@ -1,6 +1,7 @@
 package com.giveitup.giveitup_be.configuration;
 
 import com.giveitup.giveitup_be.config.CustomOAuth2SuccessHandler;
+import com.giveitup.giveitup_be.repository.HttpCookieOAuth2AuthorizationRequestRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,7 +27,9 @@ public class SecurityConfig {
     private final String[] PUBLIC_ENDPOINTS = {
         "/users", "/auth/token","/users/forgot-password","/users/reset-password", "/auth/introspect", "/auth/logout", "/auth/refresh","/posts", "/posts/top5", "/posts/map"
     };
-
+    // Inject Repository Cookie
+    @Autowired
+    private HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository;
     @Autowired
     private CustomJwtDecoder customJwtDecoder;
     @Autowired
@@ -71,13 +74,20 @@ public class SecurityConfig {
                 )
                 // [QUAN TRỌNG] Cấu hình OAuth2 Login (Xử lý đăng nhập Google)
                 .oauth2Login(oauth2 -> oauth2
-                        // Endpoint này là nơi Google trả code về, Spring tự xử lý, ta không cần viết Controller
-                        // Mặc định là /login/oauth2/code/google
-                        .redirectionEndpoint(endpoint -> endpoint
-                                .baseUri("/login/oauth2/code/*")
-                        )
-                        // Khi đăng nhập thành công thì chạy vào Handler này để tạo JWT và redirect về FE
-                        .successHandler(customOAuth2SuccessHandler)
+                                // Cấu hình Endpoint
+                                .authorizationEndpoint(authorization -> authorization
+                                        .baseUri("/oauth2/authorization")
+                                        // THÊM DÒNG NÀY: Dùng Cookie thay vì Session
+                                        .authorizationRequestRepository(cookieAuthorizationRequestRepository)
+                                )
+                                .redirectionEndpoint(endpoint -> endpoint
+                                        .baseUri("/login/oauth2/code/*")
+                                )
+                                .successHandler(customOAuth2SuccessHandler)
+                        // Thêm failure handler để xem lỗi rõ hơn (nếu cần)
+                        // .failureHandler((request, response, exception) -> {
+                        //     response.sendRedirect("http://localhost:3000/login?error=" + exception.getMessage());
+                        // })
                 )
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults());

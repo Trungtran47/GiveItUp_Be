@@ -65,21 +65,21 @@ public class SearchService {
         // =================================================================
         // [START] REDIS LOGIC: LƯU KẾT QUẢ TÌM KIẾM CHO AI
         // =================================================================
-        if (currentUser != null && posts.hasContent()) {
-            // Lấy danh sách ID của các bài viết tìm được ở trang hiện tại
-            List<Long> foundPostIds = posts.getContent().stream()
-                    .map(PostEntity::getId)
-                    .collect(Collectors.toList());
-
-            CompletableFuture.runAsync(() -> {
-                try {
-                    // Gọi hàm mới trong RedisService
-                    redisService.saveSearchHistory(currentUser.getId(), foundPostIds);
-                } catch (Exception e) {
-                    log.error("Error saving search history to Redis", e);
-                }
-            });
-        }
+//        if (currentUser != null && posts.hasContent()) {
+//            // Lấy danh sách ID của các bài viết tìm được ở trang hiện tại
+//            List<Long> foundPostIds = posts.getContent().stream()
+//                    .map(PostEntity::getId)
+//                    .collect(Collectors.toList());
+//
+//            CompletableFuture.runAsync(() -> {
+//                try {
+//                    // Gọi hàm mới trong RedisService
+//                    redisService.saveSearchHistory(currentUser.getId(), foundPostIds);
+//                } catch (Exception e) {
+//                    log.error("Error saving search history to Redis", e);
+//                }
+//            });
+//        }
         // =================================================================
         // [END] REDIS LOGIC
         // =================================================================

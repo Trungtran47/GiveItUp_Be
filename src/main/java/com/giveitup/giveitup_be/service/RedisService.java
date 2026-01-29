@@ -52,22 +52,22 @@ public class RedisService {
         redisTemplate.expire(key, 30, TimeUnit.DAYS);
     }
     //  XỬ LÝ SEARCH (Lưu các bài viết tìm thấy) ---
-    public void saveSearchHistory(Long userId, List<Long> postIds) {
-        String key = "user:" + userId + ":searches";
-        double score = System.currentTimeMillis();
-
-        // Lưu từng bài viết tìm được vào Redis
-        for (Long pid : postIds) {
-            redisTemplate.opsForZSet().add(key, String.valueOf(pid), score);
-        }
-
-        // Giới hạn lưu 50 bài tìm kiếm gần nhất để tiết kiệm RAM
-        Long size = redisTemplate.opsForZSet().size(key);
-        if (size != null && size > 50) {
-            redisTemplate.opsForZSet().removeRange(key, 0, size - 51);
-        }
-        redisTemplate.expire(key, 30, TimeUnit.DAYS);
-
-        System.out.println(">> REDIS: User " + userId + " SEARCHED & FOUND " + postIds.size() + " posts");
-    }
+//    public void saveSearchHistory(Long userId, List<Long> postIds) {
+//        String key = "user:" + userId + ":searches";
+//        double score = System.currentTimeMillis();
+//
+//        // Lưu từng bài viết tìm được vào Redis
+//        for (Long pid : postIds) {
+//            redisTemplate.opsForZSet().add(key, String.valueOf(pid), score);
+//        }
+//
+//        // Giới hạn lưu 50 bài tìm kiếm gần nhất để tiết kiệm RAM
+//        Long size = redisTemplate.opsForZSet().size(key);
+//        if (size != null && size > 50) {
+//            redisTemplate.opsForZSet().removeRange(key, 0, size - 51);
+//        }
+//        redisTemplate.expire(key, 30, TimeUnit.DAYS);
+//
+//        System.out.println(">> REDIS: User " + userId + " SEARCHED & FOUND " + postIds.size() + " posts");
+//    }
 }

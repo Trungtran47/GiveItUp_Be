@@ -100,15 +100,15 @@ public class PostController {
         data.put("postViewDb", viewDTOs);
 
         // 4. Lấy Search History và Map sang DTO
-        List<SearchHistoryEntity> searches = searchHistoryRepository.findAll();
-        List<SearchAIResponse> searchDTOs = searches.stream()
-                .map(s -> SearchAIResponse.builder()
-                        .userId(s.getUser().getId())
-                        .keyword(s.getKeyword())
-                        .createdAt(s.getCreatedAt())
-                        .build())
-                .collect(Collectors.toList());
-        data.put("searchHistoryDb", searchDTOs);
+//        List<SearchHistoryEntity> searches = searchHistoryRepository.findAll();
+//        List<SearchAIResponse> searchDTOs = searches.stream()
+//                .map(s -> SearchAIResponse.builder()
+//                        .userId(s.getUser().getId())
+//                        .keyword(s.getKeyword())
+//                        .createdAt(s.getCreatedAt())
+//                        .build())
+//                .collect(Collectors.toList());
+//        data.put("searchHistoryDb", searchDTOs);
 
         return ResponseEntity.ok(data);
     }

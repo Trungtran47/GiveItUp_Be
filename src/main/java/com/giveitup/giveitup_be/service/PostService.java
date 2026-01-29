@@ -486,6 +486,8 @@ public class PostService {
         try {
             // A. Lấy thông tin Admin đang thực hiện (Người gửi)
             UserEntity adminSender = userService.getMyInfoReturnEntity();
+            OrganizationEntity org = post.getOrganization();
+            UserEntity postOwner = org.getUser();
             // B. Chuẩn bị nội dung thông báo dựa trên trạng thái
             String message = "";
             String notiType = "";
@@ -510,6 +512,35 @@ public class PostService {
                         notiType,            // Loại thông báo
                         "/project/" + post.getId() // Link dẫn đến bài viết (Frontend handle route này)
                 );
+            }
+            // ====================================================================
+            // E. [MỚI] GỬI THÔNG BÁO CHO FOLLOWERS (CHỈ KHI ACTIVE)
+            // ====================================================================
+            if (targetStatus == PostStatus.ACTIVE) {
+                // Lấy danh sách những người đang theo dõi chủ bài viết
+                // Lưu ý: postOwner.getFollowers() trả về List<FollowEntity>
+                List<FollowEntity> followersList = postOwner.getFollowers();
+
+                if (followersList != null && !followersList.isEmpty()) {
+                    String followerMessage = "Tổ chức " + org.getOrganizationName() + " mà bạn theo dõi vừa đăng một dự án mới: " + post.getTitle();
+                    String followerNotiType = "NEW_POST_FROM_FOLLOWING"; // Loại thông báo mới
+
+                    for (FollowEntity follow : followersList) {
+                        // Người nhận là người theo dõi (Follower)
+                        UserEntity recipient = follow.getFollower();
+
+                        // (Optional) Kiểm tra để tránh gửi lại cho chính admin nếu admin cũng follow
+                        if (!recipient.getId().equals(adminSender.getId())) {
+                            notificationService.sendNotification(
+                                    recipient,
+                                    adminSender,
+                                    followerMessage,
+                                    followerNotiType,
+                                    "/project/" + post.getId()
+                            );
+                        }
+                    }
+                }
             }
         } catch (Exception e) {
             // Log lỗi nhưng không chặn transaction chính (để việc duyệt bài vẫn thành công dù gửi noti lỗi)
